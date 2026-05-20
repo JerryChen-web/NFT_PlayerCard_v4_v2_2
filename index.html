@@ -1,0 +1,3047 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>動態球員卡收藏 v2</title>
+  <style>
+    :root{
+      --bg:#11110f;
+      --bg-soft:#171815;
+      --surface:#1f211d;
+      --surface-2:#282a25;
+      --surface-3:#303329;
+      --ink:#f7f2e8;
+      --muted:#b9b0a4;
+      --dim:#80786d;
+      --line:rgba(247,242,232,.15);
+      --line-strong:rgba(247,242,232,.26);
+      --gold:#e6b85c;
+      --teal:#3fd0c9;
+      --red:#e55d4f;
+      --green:#78c66d;
+      --blue:#6aa7ff;
+      --violet:#b590ff;
+      --paper:#f4ead9;
+      --paper-ink:#201b15;
+      --shadow:0 18px 46px rgba(0,0,0,.32);
+      --radius:8px;
+      --font-sans:"Noto Sans TC","Microsoft JhengHei","PingFang TC",system-ui,sans-serif;
+      --font-mono:"Cascadia Code","SFMono-Regular",Consolas,monospace;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    html{overflow-x:hidden}
+    body{
+      margin:0;
+      color:var(--ink);
+      background:
+        linear-gradient(120deg, rgba(63,208,201,.11), transparent 34%),
+        linear-gradient(250deg, rgba(230,184,92,.12), transparent 40%),
+        repeating-linear-gradient(90deg, rgba(255,255,255,.018) 0 1px, transparent 1px 26px),
+        var(--bg);
+      font-family:var(--font-sans);
+      overflow:hidden;
+      overflow-x:hidden;
+    }
+
+    button,input,select,textarea{font:inherit}
+    button{cursor:pointer}
+    button:disabled{cursor:not-allowed;opacity:.55}
+    a{color:inherit}
+    img{display:block;max-width:100%}
+
+    .app-shell{
+      height:100vh;
+      width:100%;
+      max-width:100%;
+      display:grid;
+      grid-template-columns:268px minmax(0,1fr);
+      isolation:isolate;
+    }
+
+    .sidebar{
+      display:flex;
+      flex-direction:column;
+      min-height:0;
+      min-width:0;
+      padding:18px;
+      background:
+        linear-gradient(180deg, rgba(31,33,29,.98), rgba(17,17,15,.98)),
+        repeating-linear-gradient(0deg, transparent 0 14px, rgba(255,255,255,.025) 14px 15px);
+      border-right:1px solid var(--line);
+      box-shadow:16px 0 44px rgba(0,0,0,.25);
+      z-index:2;
+    }
+
+    .brand{
+      display:grid;
+      grid-template-columns:48px minmax(0,1fr);
+      gap:12px;
+      align-items:center;
+      padding:6px 0 18px;
+      border-bottom:1px solid var(--line);
+    }
+
+    .brand-mark{
+      width:48px;
+      height:48px;
+      display:grid;
+      place-items:center;
+      border-radius:8px;
+      color:#16120c;
+      font-weight:900;
+      letter-spacing:.5px;
+      background:linear-gradient(135deg,var(--teal),var(--gold) 56%,var(--red));
+      box-shadow:0 14px 30px rgba(230,184,92,.18);
+    }
+
+    .brand h1{
+      margin:0;
+      font-size:19px;
+      line-height:1.15;
+      letter-spacing:0;
+    }
+    .brand p{
+      margin:4px 0 0;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.35;
+    }
+
+    .nav{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      min-width:0;
+      padding:16px 0;
+      overflow:auto;
+    }
+
+    .nav-btn{
+      display:grid;
+      grid-template-columns:32px minmax(0,1fr);
+      align-items:center;
+      gap:10px;
+      width:100%;
+      min-height:48px;
+      color:var(--muted);
+      background:transparent;
+      border:1px solid transparent;
+      border-radius:8px;
+      padding:8px;
+      text-align:left;
+      transition:background .18s ease,border-color .18s ease,color .18s ease,transform .18s ease;
+    }
+    .nav-btn:hover{background:rgba(255,255,255,.055);color:var(--ink);transform:translateX(2px)}
+    .nav-btn.active{
+      color:var(--ink);
+      background:linear-gradient(135deg, rgba(63,208,201,.16), rgba(230,184,92,.13));
+      border-color:rgba(230,184,92,.36);
+    }
+    .nav-ico{
+      width:32px;
+      height:32px;
+      display:grid;
+      place-items:center;
+      border-radius:8px;
+      background:rgba(255,255,255,.08);
+      color:var(--gold);
+      font-weight:850;
+    }
+    .nav-btn strong{
+      display:block;
+      font-size:14px;
+      line-height:1.1;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+    .nav-btn small{
+      display:block;
+      margin-top:3px;
+      color:var(--dim);
+      font-size:11px;
+      line-height:1.1;
+    }
+
+    .wallet{
+      margin-top:auto;
+      border:1px solid var(--line);
+      border-radius:8px;
+      background:linear-gradient(180deg, rgba(255,255,255,.075), rgba(255,255,255,.035));
+      overflow:hidden;
+    }
+    .wallet-main{padding:14px}
+    .wallet-label{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      color:var(--dim);
+      font-family:var(--font-mono);
+      font-size:11px;
+      letter-spacing:.3px;
+    }
+    .wallet-value{
+      display:flex;
+      align-items:baseline;
+      gap:7px;
+      margin:8px 0 10px;
+      font-family:var(--font-mono);
+      font-size:28px;
+      color:#fff;
+    }
+    .wallet-value small{font-size:13px;color:var(--muted)}
+    .meter{
+      height:7px;
+      border-radius:999px;
+      background:rgba(255,255,255,.12);
+      overflow:hidden;
+    }
+    .meter span{
+      display:block;
+      height:100%;
+      border-radius:999px;
+      background:linear-gradient(90deg,var(--red),var(--gold),var(--teal));
+    }
+    .wallet-actions{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:8px;
+      padding:0 14px 14px;
+    }
+
+    .main{
+      display:flex;
+      min-width:0;
+      min-height:0;
+      flex-direction:column;
+    }
+
+    .topbar{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto;
+      gap:18px;
+      align-items:center;
+      min-height:78px;
+      padding:14px 24px;
+      border-bottom:1px solid var(--line);
+      background:rgba(23,24,21,.78);
+      backdrop-filter:blur(16px);
+      z-index:1;
+    }
+    .page-title{
+      display:grid;
+      grid-template-columns:42px minmax(0,1fr);
+      gap:12px;
+      align-items:center;
+      min-width:0;
+    }
+    .page-seal{
+      width:42px;
+      height:42px;
+      display:grid;
+      place-items:center;
+      border-radius:8px;
+      color:var(--paper-ink);
+      font-weight:900;
+      background:linear-gradient(135deg,var(--gold),var(--paper));
+      border:1px solid rgba(255,255,255,.18);
+    }
+    .page-title h2{
+      margin:0;
+      font-size:22px;
+      line-height:1.16;
+      letter-spacing:0;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+    .page-title p{
+      margin:4px 0 0;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.35;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+
+    .top-actions{
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+      gap:8px;
+      flex-wrap:wrap;
+      min-width:0;
+    }
+
+    .view-wrap{
+      flex:1;
+      min-height:0;
+      overflow:auto;
+      padding:22px 24px 30px;
+      width:100%;
+      max-width:1760px;
+      margin:0 auto;
+    }
+    .view{display:none}
+    .view.active{display:block;animation:fadeIn .22s ease both}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+    .grid{display:grid;gap:14px}
+    .cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+    .align-start{align-items:start}
+    .mt-14{margin-top:14px}
+    .mt-18{margin-top:18px}
+    .mb-0{margin-bottom:0}
+
+    .panel{
+      border:1px solid var(--line);
+      border-radius:8px;
+      background:rgba(31,33,29,.88);
+      box-shadow:var(--shadow);
+    }
+    .panel-pad{padding:18px}
+    .panel h3,.panel h4{margin:0;color:#fff;letter-spacing:0}
+    .panel h3{font-size:20px;line-height:1.2}
+    .panel h4{font-size:15px;line-height:1.25}
+    .panel p{margin:8px 0 0;color:var(--muted);font-size:13px;line-height:1.65}
+
+    .hero-grid{
+      display:grid;
+      grid-template-columns:minmax(0,1.18fr) minmax(310px,.82fr);
+      gap:14px;
+      align-items:stretch;
+    }
+    .brief{
+      display:grid;
+      gap:18px;
+      align-content:space-between;
+      min-height:420px;
+      padding:22px;
+      background:
+        linear-gradient(135deg, rgba(63,208,201,.13), transparent 34%),
+        linear-gradient(290deg, rgba(229,93,79,.13), transparent 44%),
+        rgba(31,33,29,.9);
+    }
+    .brief-kicker{
+      display:inline-flex;
+      width:max-content;
+      max-width:100%;
+      gap:8px;
+      align-items:center;
+      border:1px solid rgba(230,184,92,.34);
+      border-radius:8px;
+      padding:7px 9px;
+      color:var(--gold);
+      background:rgba(230,184,92,.08);
+      font-size:12px;
+      font-weight:800;
+    }
+    .brief h2{
+      margin:0;
+      max-width:780px;
+      font-size:38px;
+      line-height:1.08;
+      letter-spacing:0;
+      color:#fff;
+    }
+    .brief p{
+      max-width:780px;
+      font-size:15px;
+    }
+    .pipeline{
+      display:grid;
+      grid-template-columns:repeat(5,minmax(0,1fr));
+      gap:8px;
+    }
+    .pipe-step{
+      min-height:84px;
+      padding:10px;
+      border:1px solid var(--line);
+      border-radius:8px;
+      background:rgba(255,255,255,.05);
+    }
+    .pipe-step b{display:block;color:#fff;font-size:13px}
+    .pipe-step span{display:block;margin-top:6px;color:var(--muted);font-size:12px;line-height:1.35}
+
+    .stat-tile{
+      min-height:118px;
+      padding:16px;
+      border:1px solid var(--line);
+      border-radius:8px;
+      background:rgba(255,255,255,.045);
+    }
+    .stat-tile span{display:block;color:var(--dim);font-size:12px}
+    .stat-tile strong{
+      display:block;
+      margin-top:10px;
+      color:#fff;
+      font-family:var(--font-mono);
+      font-size:28px;
+      line-height:1;
+      overflow-wrap:anywhere;
+    }
+    .stat-tile p{font-size:12px}
+
+    .card-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(270px,1fr));
+      gap:14px;
+    }
+
+    .player-card{
+      position:relative;
+      min-width:0;
+      overflow:hidden;
+      border:1px solid color-mix(in srgb, var(--rarity-color, var(--line-strong)) 45%, var(--line));
+      border-radius:8px;
+      background:
+        linear-gradient(145deg, color-mix(in srgb, var(--team-a, #3fd0c9) 18%, transparent), transparent 38%),
+        linear-gradient(315deg, color-mix(in srgb, var(--team-b, #e6b85c) 16%, transparent), transparent 48%),
+        var(--surface);
+      box-shadow:0 18px 44px rgba(0,0,0,.28);
+      transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;
+    }
+    .player-card:hover{
+      transform:translateY(-2px);
+      border-color:color-mix(in srgb, var(--rarity-color, var(--gold)) 65%, white 5%);
+      box-shadow:0 22px 54px rgba(0,0,0,.36);
+    }
+    .player-card.effect-goal,.player-card.effect-homer,.player-card.effect-award{
+      animation:pulseGlow 1.1s ease both;
+    }
+    @keyframes pulseGlow{
+      0%{box-shadow:0 0 0 rgba(230,184,92,0)}
+      34%{box-shadow:0 0 0 4px color-mix(in srgb, var(--rarity-color, var(--gold)) 45%, transparent),0 22px 64px rgba(0,0,0,.42)}
+      100%{box-shadow:0 18px 44px rgba(0,0,0,.28)}
+    }
+
+    .card-topline{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:center;
+      padding:11px 12px;
+      min-height:46px;
+      border-bottom:1px solid var(--line);
+      background:rgba(0,0,0,.16);
+    }
+    .serial{
+      color:var(--muted);
+      font-family:var(--font-mono);
+      font-size:11px;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+    .rarity-pill,.status-pill,.badge,.source-pill{
+      display:inline-flex;
+      align-items:center;
+      min-height:25px;
+      max-width:100%;
+      border:1px solid var(--line);
+      border-radius:8px;
+      padding:4px 8px;
+      color:#fff;
+      background:rgba(255,255,255,.07);
+      font-size:11px;
+      font-weight:800;
+      line-height:1.2;
+      overflow-wrap:anywhere;
+    }
+    .rarity-pill{border-color:color-mix(in srgb, var(--rarity-color, var(--gold)) 55%, var(--line));color:var(--rarity-color,var(--gold))}
+    .status-pill.warning{border-color:rgba(229,93,79,.48);color:#ffb1a8;background:rgba(229,93,79,.11)}
+    .status-pill.special{border-color:rgba(120,198,109,.48);color:#bdf5b7;background:rgba(120,198,109,.11)}
+
+    .media-frame{
+      position:relative;
+      height:248px;
+      overflow:hidden;
+      background:
+        linear-gradient(150deg, color-mix(in srgb, var(--team-a,#3fd0c9) 42%, #20221e), color-mix(in srgb, var(--team-b,#e6b85c) 34%, #11110f)),
+        var(--surface-2);
+    }
+    .media-frame::after{
+      content:"";
+      position:absolute;
+      inset:auto 0 0 0;
+      height:58%;
+      background:linear-gradient(180deg, transparent, rgba(0,0,0,.72));
+      pointer-events:none;
+    }
+    .media-frame img.player-img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      object-position:center top;
+      filter:saturate(1.08) contrast(1.03);
+    }
+    .media-frame.is-fallback img.player-img{display:none}
+    .fallback-initials{
+      position:absolute;
+      inset:0;
+      display:grid;
+      place-items:center;
+      color:rgba(255,255,255,.88);
+      font-weight:950;
+      font-size:58px;
+      letter-spacing:0;
+      text-shadow:0 4px 22px rgba(0,0,0,.36);
+    }
+    .media-frame:not(.is-fallback) .fallback-initials{display:none}
+    .team-logo{
+      position:absolute;
+      right:12px;
+      bottom:12px;
+      width:54px;
+      height:54px;
+      z-index:2;
+      display:grid;
+      place-items:center;
+      border:1px solid rgba(255,255,255,.38);
+      border-radius:8px;
+      background:rgba(255,255,255,.9);
+      box-shadow:0 10px 26px rgba(0,0,0,.28);
+      overflow:hidden;
+    }
+    .team-logo img{
+      width:42px;
+      height:42px;
+      object-fit:contain;
+    }
+    .team-logo.logo-failed::before{
+      content:attr(data-code);
+      color:#1c1710;
+      font-weight:900;
+      font-size:13px;
+    }
+    .media-label{
+      position:absolute;
+      left:12px;
+      bottom:12px;
+      z-index:2;
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+      max-width:calc(100% - 82px);
+    }
+
+    .card-body{
+      display:grid;
+      gap:12px;
+      padding:14px;
+    }
+    .name-row{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto;
+      align-items:start;
+      gap:10px;
+    }
+    .player-name{
+      margin:0;
+      color:#fff;
+      font-size:22px;
+      line-height:1.08;
+      letter-spacing:0;
+      overflow-wrap:anywhere;
+    }
+    .team-line{
+      margin:5px 0 0;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.35;
+    }
+    .number-chip{
+      min-width:42px;
+      height:42px;
+      display:grid;
+      place-items:center;
+      border:1px solid var(--line);
+      border-radius:8px;
+      color:#fff;
+      background:rgba(0,0,0,.18);
+      font-family:var(--font-mono);
+      font-weight:900;
+    }
+    .badge-row{display:flex;flex-wrap:wrap;gap:6px}
+    .stats{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:8px;
+    }
+    .stat-box{
+      min-height:62px;
+      border:1px solid var(--line);
+      border-radius:8px;
+      padding:8px;
+      background:rgba(255,255,255,.045);
+    }
+    .stat-box span{
+      display:block;
+      color:var(--dim);
+      font-size:10px;
+      font-family:var(--font-mono);
+      line-height:1.1;
+      text-transform:uppercase;
+    }
+    .stat-box b{
+      display:block;
+      margin-top:7px;
+      color:#fff;
+      font-size:18px;
+      line-height:1;
+      font-family:var(--font-mono);
+      overflow-wrap:anywhere;
+    }
+    .value-row{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:center;
+      color:var(--muted);
+      font-size:12px;
+    }
+    .value-row b{
+      color:#fff;
+      font-family:var(--font-mono);
+      font-size:14px;
+    }
+    .card-actions{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:8px;
+    }
+    .card-actions.three{grid-template-columns:1fr 1fr 1fr}
+
+    .btn,.icon-btn,.field,.select,.search{
+      min-height:38px;
+      border:1px solid var(--line);
+      border-radius:8px;
+      background:rgba(255,255,255,.07);
+      color:var(--ink);
+      outline:none;
+    }
+    .btn,.icon-btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:7px;
+      padding:8px 11px;
+      font-size:13px;
+      font-weight:800;
+      line-height:1.15;
+      transition:background .18s ease,border-color .18s ease,transform .18s ease,filter .18s ease;
+    }
+    .btn:hover,.icon-btn:hover{background:rgba(255,255,255,.12);border-color:var(--line-strong);transform:translateY(-1px)}
+    .btn.primary{
+      color:#16120c;
+      border-color:rgba(230,184,92,.58);
+      background:linear-gradient(135deg,var(--gold),#f1dfb6);
+    }
+    .btn.teal{
+      color:#071312;
+      border-color:rgba(63,208,201,.56);
+      background:linear-gradient(135deg,var(--teal),#c9f1ef);
+    }
+    .btn.danger{
+      color:#ffe9e6;
+      border-color:rgba(229,93,79,.44);
+      background:rgba(229,93,79,.16);
+    }
+    .icon-btn{
+      width:38px;
+      padding:0;
+      font-family:var(--font-mono);
+    }
+    .field,.select,.search{
+      width:100%;
+      padding:8px 10px;
+      font-size:13px;
+      background:rgba(255,255,255,.08);
+    }
+    .field:focus,.select:focus,.search:focus{border-color:rgba(63,208,201,.72);box-shadow:0 0 0 3px rgba(63,208,201,.12)}
+    .search{min-width:220px}
+    .select{min-width:150px}
+
+    .section-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-end;
+      gap:14px;
+      margin-bottom:14px;
+    }
+    .section-head h3{margin:0;color:#fff;font-size:22px}
+    .section-head p{max-width:760px;margin:6px 0 0;color:var(--muted);font-size:13px;line-height:1.6}
+    .section-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}
+
+    .oracle-layout{
+      display:grid;
+      grid-template-columns:minmax(280px,370px) minmax(0,1fr);
+      gap:14px;
+      align-items:start;
+    }
+    .event-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+      gap:10px;
+    }
+    .event-btn{
+      justify-content:flex-start;
+      min-height:78px;
+      padding:12px;
+      text-align:left;
+      background:rgba(255,255,255,.055);
+    }
+    .event-btn .event-icon{
+      width:34px;
+      height:34px;
+      display:grid;
+      place-items:center;
+      flex:0 0 auto;
+      border-radius:8px;
+      background:rgba(230,184,92,.14);
+      color:var(--gold);
+      font-weight:900;
+    }
+    .event-btn strong{display:block;color:#fff;font-size:13px}
+    .event-btn span{display:block;margin-top:5px;color:var(--muted);font-size:12px;line-height:1.35}
+
+    .json-box{
+      max-height:460px;
+      overflow:auto;
+      margin:0;
+      padding:14px;
+      border:1px solid var(--line);
+      border-radius:8px;
+      background:#0c0d0b;
+      color:#d8f7e4;
+      font-family:var(--font-mono);
+      font-size:12px;
+      line-height:1.55;
+      white-space:pre-wrap;
+      overflow-wrap:anywhere;
+    }
+    .timeline{
+      display:grid;
+      gap:8px;
+      max-height:360px;
+      overflow:auto;
+      padding-right:4px;
+    }
+    .log-line{
+      border:1px solid var(--line);
+      border-radius:8px;
+      padding:10px;
+      background:rgba(255,255,255,.045);
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.5;
+    }
+    .log-line b{display:block;color:#fff;margin-bottom:3px}
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      overflow:hidden;
+      border-radius:8px;
+      font-size:13px;
+    }
+    th,td{
+      padding:10px;
+      border-bottom:1px solid var(--line);
+      vertical-align:top;
+      text-align:left;
+      line-height:1.5;
+    }
+    th{color:#fff;background:rgba(255,255,255,.06)}
+    td{color:var(--muted)}
+    tr:last-child td{border-bottom:0}
+
+    .form-grid{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:12px;
+    }
+    .form-field label{
+      display:block;
+      margin-bottom:6px;
+      color:var(--muted);
+      font-size:12px;
+      font-weight:800;
+    }
+
+    .notice{
+      border:1px solid rgba(230,184,92,.34);
+      border-radius:8px;
+      padding:12px;
+      background:rgba(230,184,92,.08);
+      color:#f5dfad;
+      font-size:13px;
+      line-height:1.65;
+    }
+    .empty{
+      display:grid;
+      place-items:center;
+      min-height:260px;
+      border:1px dashed var(--line-strong);
+      border-radius:8px;
+      color:var(--muted);
+      text-align:center;
+      padding:20px;
+      background:rgba(255,255,255,.035);
+    }
+    .empty strong{display:block;color:#fff;font-size:18px;margin-bottom:8px}
+
+    .modal{
+      position:fixed;
+      inset:0;
+      z-index:10;
+      display:none;
+      place-items:center;
+      padding:20px;
+      background:rgba(0,0,0,.62);
+    }
+    .modal.open{display:grid}
+    .modal-panel{
+      width:min(1040px,100%);
+      max-height:min(88vh,900px);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      border:1px solid var(--line-strong);
+      border-radius:8px;
+      background:var(--bg-soft);
+      box-shadow:0 30px 80px rgba(0,0,0,.48);
+    }
+    .modal-head{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:center;
+      padding:14px 16px;
+      border-bottom:1px solid var(--line);
+    }
+    .modal-head h3{
+      margin:0;
+      color:#fff;
+      font-size:18px;
+      overflow-wrap:anywhere;
+    }
+    .modal-body{
+      overflow:auto;
+      padding:16px;
+    }
+    .detail-grid{
+      display:grid;
+      grid-template-columns:minmax(270px,330px) minmax(0,1fr);
+      gap:14px;
+      align-items:start;
+    }
+    .kv-grid{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:8px;
+    }
+    .kv{
+      min-height:62px;
+      border:1px solid var(--line);
+      border-radius:8px;
+      padding:9px;
+      background:rgba(255,255,255,.045);
+    }
+    .kv span{
+      display:block;
+      color:var(--dim);
+      font-family:var(--font-mono);
+      font-size:10px;
+      text-transform:uppercase;
+    }
+    .kv b{
+      display:block;
+      margin-top:6px;
+      color:#fff;
+      font-size:13px;
+      line-height:1.35;
+      overflow-wrap:anywhere;
+    }
+
+    .toast{
+      position:fixed;
+      right:20px;
+      bottom:20px;
+      z-index:12;
+      width:min(360px,calc(100vw - 40px));
+      display:none;
+      border:1px solid var(--line-strong);
+      border-radius:8px;
+      background:rgba(31,33,29,.96);
+      box-shadow:0 18px 48px rgba(0,0,0,.42);
+      overflow:hidden;
+    }
+    .toast.show{display:block;animation:fadeIn .18s ease both}
+    .toast-inner{
+      display:grid;
+      grid-template-columns:36px minmax(0,1fr);
+      gap:10px;
+      padding:12px;
+      align-items:center;
+    }
+    .toast-icon{
+      width:36px;
+      height:36px;
+      display:grid;
+      place-items:center;
+      border-radius:8px;
+      color:#15110c;
+      background:linear-gradient(135deg,var(--gold),var(--teal));
+      font-weight:900;
+    }
+    .toast strong{display:block;color:#fff;font-size:13px}
+    .toast span{display:block;margin-top:3px;color:var(--muted);font-size:12px;line-height:1.45}
+
+    .exchange-strip{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:10px;
+    }
+    .exchange-strip article,.valuation-grid div,.diff-table div{
+      border:1px solid var(--line);
+      border-radius:8px;
+      padding:12px;
+      background:rgba(255,255,255,.045);
+      min-width:0;
+    }
+    .exchange-strip span,.valuation-grid span,.diff-table span{display:block;color:var(--dim);font-size:11px;font-family:var(--font-mono)}
+    .exchange-strip b,.valuation-grid b,.diff-table b{display:block;margin-top:6px;color:#fff;line-height:1.25;overflow-wrap:anywhere}
+    .exchange-strip small{display:block;margin-top:5px;color:var(--muted);font-size:11px;line-height:1.35}
+    .load-row{display:flex;justify-content:center;margin-top:16px}
+
+    .ability-head{
+      display:grid;
+      grid-template-columns:64px minmax(0,1fr) 38px;
+      gap:8px;
+      align-items:center;
+    }
+    .ovr{
+      min-height:58px;
+      border:1px solid color-mix(in srgb, var(--rarity-color, var(--gold)) 48%, var(--line));
+      border-radius:8px;
+      display:grid;
+      place-items:center;
+      background:linear-gradient(135deg, color-mix(in srgb, var(--rarity-color, var(--gold)) 18%, transparent), rgba(255,255,255,.045));
+    }
+    .ovr span{font-size:10px;color:var(--muted);font-family:var(--font-mono)}
+    .ovr b{font-size:24px;line-height:1;color:#fff;font-family:var(--font-mono)}
+    .ability-mini{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:6px;
+    }
+    .ability-mini span{
+      min-height:32px;
+      border:1px solid var(--line);
+      border-radius:8px;
+      display:grid;
+      place-items:center;
+      color:var(--muted);
+      font-size:10px;
+      background:rgba(255,255,255,.04);
+    }
+    .ability-mini b{color:#fff}
+    .watch-btn.active{color:#17110a;background:linear-gradient(135deg,var(--gold),#fff2c7)}
+    .skill-row{display:flex;flex-wrap:wrap;gap:6px}
+    .skill-row span{
+      border:1px solid rgba(63,208,201,.34);
+      border-radius:8px;
+      padding:5px 7px;
+      color:#c9f7f5;
+      background:rgba(63,208,201,.08);
+      font-size:11px;
+      font-weight:800;
+    }
+    .player-card{box-shadow:0 18px 44px rgba(0,0,0,.28),0 0 0 1px color-mix(in srgb, var(--rarity-color, var(--gold)) 12%, transparent)}
+    .player-card::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      background:radial-gradient(circle at 50% 0, color-mix(in srgb, var(--rarity-color, var(--gold)) 20%, transparent), transparent 34%);
+      opacity:.75;
+      z-index:0;
+    }
+    .player-card > *{position:relative;z-index:1}
+
+    .mini-rank{min-height:100%}
+    .rank-list{display:grid;gap:8px}
+    .rank-row{
+      width:100%;
+      display:grid;
+      grid-template-columns:28px minmax(0,1fr) auto;
+      gap:8px;
+      align-items:center;
+      border:1px solid var(--line);
+      border-radius:8px;
+      padding:8px;
+      text-align:left;
+      color:var(--ink);
+      background:rgba(255,255,255,.045);
+    }
+    .rank-row:hover{border-color:var(--line-strong);background:rgba(255,255,255,.08)}
+    .rank-row b{display:grid;place-items:center;width:28px;height:28px;border-radius:8px;color:#17110a;background:var(--gold);font-family:var(--font-mono)}
+    .rank-row span{min-width:0;color:#fff;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .rank-row small{display:block;color:var(--muted);font-weight:500;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .rank-row strong{color:var(--gold);font-family:var(--font-mono);font-size:12px}
+
+    .chain-flow{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:8px;
+    }
+    .chain-flow.long{grid-template-columns:repeat(5,minmax(0,1fr))}
+    .flow-step{
+      min-height:74px;
+      display:grid;
+      grid-template-columns:30px minmax(0,1fr);
+      gap:8px;
+      align-items:center;
+      border:1px solid var(--line);
+      border-radius:8px;
+      padding:9px;
+      background:rgba(255,255,255,.04);
+    }
+    .flow-step.active{border-color:rgba(63,208,201,.38);background:rgba(63,208,201,.07)}
+    .flow-step b{display:grid;place-items:center;width:30px;height:30px;border-radius:8px;background:rgba(230,184,92,.16);color:var(--gold);font-family:var(--font-mono)}
+    .flow-step span{color:#fff;font-size:12px;line-height:1.35}
+    .json-box.compact{max-height:260px}
+    .diff-table{display:grid;gap:8px}
+
+    .story-text{white-space:pre-line}
+    .clean-list{margin:10px 0 0;padding-left:18px;color:var(--muted);font-size:13px;line-height:1.6}
+    .ability-bars{display:grid;gap:9px}
+    .bar-row{
+      position:relative;
+      display:grid;
+      grid-template-columns:96px 42px minmax(0,1fr);
+      gap:8px;
+      align-items:center;
+      min-height:30px;
+      overflow:hidden;
+    }
+    .bar-row span{color:var(--muted);font-size:12px;text-transform:uppercase}
+    .bar-row b{color:#fff;font-family:var(--font-mono)}
+    .bar-row i{
+      display:block;
+      height:9px;
+      border-radius:999px;
+      background:linear-gradient(90deg,var(--teal),var(--gold));
+    }
+    .valuation-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+    .social-grid{display:flex;flex-wrap:wrap;gap:8px}
+    .social-link{
+      min-height:36px;
+      display:inline-flex;
+      align-items:center;
+      border:1px solid rgba(63,208,201,.34);
+      border-radius:8px;
+      padding:8px 10px;
+      color:#d8fffd;
+      text-decoration:none;
+      background:rgba(63,208,201,.08);
+      font-size:13px;
+      font-weight:800;
+    }
+    .social-link:hover{background:rgba(63,208,201,.15);border-color:rgba(63,208,201,.58)}
+    .source-list{display:grid;gap:8px}
+    .source-list div{border:1px solid var(--line);border-radius:8px;padding:10px;background:rgba(255,255,255,.04)}
+    .source-list b{display:block;color:#fff;font-size:13px}
+    .source-list span,.source-list a{display:block;margin-top:5px;color:var(--muted);font-size:12px;line-height:1.45;overflow-wrap:anywhere}
+    .source-list a{color:#c9f7f5;text-decoration:none}
+    .achievement-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+    .achievement{
+      border:1px solid var(--line);
+      border-radius:8px;
+      padding:10px;
+      background:rgba(255,255,255,.04);
+      min-height:72px;
+    }
+    .achievement.done{border-color:rgba(230,184,92,.45);background:rgba(230,184,92,.09)}
+    .achievement b{display:block;color:#fff;font-size:13px}
+    .achievement span{display:block;margin-top:5px;color:var(--muted);font-size:12px;line-height:1.35}
+
+    @media (max-width:1080px){
+      .app-shell{grid-template-columns:1fr}
+      .sidebar{
+        position:relative;
+        height:auto;
+        min-height:0;
+        padding:12px 14px;
+        border-right:0;
+        border-bottom:1px solid var(--line);
+      }
+      .brand{grid-template-columns:40px 1fr;padding:0 0 10px}
+      .brand-mark{width:40px;height:40px}
+      .nav{flex-direction:row;padding:10px 0;overflow:auto}
+      .nav{width:100%;max-width:100%;overflow-x:auto;overflow-y:hidden;contain:inline-size}
+      .nav-btn{min-width:132px}
+      .sidebar{overflow-x:hidden}
+      .wallet{display:none}
+      body{overflow:auto}
+      .app-shell{height:auto;min-height:100vh}
+      .sidebar,.main,.topbar,.view-wrap{width:100%;max-width:100%;min-width:0}
+      .main{min-height:0}
+      .view-wrap{overflow:visible}
+      .topbar{position:sticky;top:0}
+      .hero-grid,.oracle-layout,.detail-grid{grid-template-columns:1fr}
+      .brief{min-height:auto}
+      .pipeline{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .exchange-strip{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .chain-flow,.chain-flow.long{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .valuation-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+    }
+
+    @media (max-width:740px){
+      .topbar{
+        grid-template-columns:1fr;
+        align-items:start;
+        padding:13px 14px;
+      }
+      .top-actions{justify-content:flex-start}
+      .view-wrap{padding:16px 14px 24px}
+      .brief h2{font-size:28px}
+      .cols-2,.cols-3,.cols-4,.form-grid,.kv-grid,.exchange-strip,.valuation-grid{grid-template-columns:1fr}
+      .card-grid{grid-template-columns:1fr}
+      .pipeline,.chain-flow,.chain-flow.long{grid-template-columns:1fr}
+      .section-head{display:grid;align-items:start}
+      .section-actions{justify-content:flex-start}
+      .search,.select{min-width:0}
+      .stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+      .card-actions,.card-actions.three{grid-template-columns:1fr}
+      .ability-head{grid-template-columns:58px minmax(0,1fr) 38px}
+      .ability-mini{grid-template-columns:1fr}
+      .modal{padding:0}
+      .modal-panel{width:100%;height:100%;max-height:100vh;border-radius:0}
+      table{display:block;overflow-x:auto;white-space:nowrap}
+      .bar-row{grid-template-columns:82px 38px minmax(0,1fr)}
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">DSP</div>
+        <div>
+          <h1>動態球員卡收藏</h1>
+          <p>Dynamic NFT Player Cards</p>
+        </div>
+      </div>
+      <nav class="nav" id="nav"></nav>
+      <section class="wallet" aria-label="Demo Wallet">
+        <div class="wallet-main">
+          <div class="wallet-label"><span>DEMO WALLET</span><span id="collectionBadge">0 CARDS</span></div>
+          <div class="wallet-value"><span id="walletBalance">12.50</span><small>ETH</small></div>
+          <div class="meter"><span id="walletMeter"></span></div>
+        </div>
+        <div class="wallet-actions">
+          <button class="btn" data-action="export-state" title="匯出資料">匯出</button>
+          <button class="btn danger" data-action="reset-demo" title="重置 Demo">重置</button>
+        </div>
+      </section>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="page-title">
+          <div class="page-seal" id="pageIcon">總</div>
+          <div>
+            <h2 id="pageTitle">總覽 Dashboard</h2>
+            <p id="pageSubtitle">資料來源、事件判斷、metadata 更新與動態卡面展示。</p>
+          </div>
+        </div>
+        <div class="top-actions" id="topActions"></div>
+      </header>
+
+      <div class="view-wrap">
+        <section class="view active" id="view-dashboard"></section>
+        <section class="view" id="view-market"></section>
+        <section class="view" id="view-collection"></section>
+        <section class="view" id="view-oracle"></section>
+        <section class="view" id="view-datahub"></section>
+        <section class="view" id="view-studio"></section>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal" id="detailModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-panel">
+      <div class="modal-head">
+        <h3 id="modalTitle">Card Detail</h3>
+        <button class="icon-btn" data-action="close-modal" aria-label="關閉">X</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite">
+    <div class="toast-inner">
+      <div class="toast-icon" id="toastIcon">OK</div>
+      <div>
+        <strong id="toastTitle">通知</strong>
+        <span id="toastMsg">Message</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (() => {
+    "use strict";
+
+    const $ = (selector, root = document) => root.querySelector(selector);
+    const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+    const clone = (value) => JSON.parse(JSON.stringify(value));
+    const nowISO = () => new Date().toISOString();
+    const uid = (prefix) => `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
+    const money = (value) => Number(value || 0).toFixed(2);
+    const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+    const escapeHTML = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+    }[char]));
+    const escapeAttr = escapeHTML;
+
+    const SOURCE_NOTE = "Demo normalized from official player profile pages and manual oracle events. Not live statistics.";
+
+    const Views = [
+      {id:"dashboard", icon:"總", title:"總覽 Dashboard", subtitle:"資料來源、事件判斷、metadata 更新與動態卡面展示。", nav:"總覽", sub:"Dashboard"},
+      {id:"market", icon:"市", title:"Dynamic Card Exchange", subtitle:"150 張球星卡，支援搜尋、排序、Mint、出價與二級市場交易。", nav:"市場", sub:"Market"},
+      {id:"collection", icon:"藏", title:"我的收藏庫", subtitle:"管理已 Mint 的 Dynamic NFT 卡片與版本紀錄。", nav:"收藏庫", sub:"Collection"},
+      {id:"oracle", icon:"更", title:"預言機事件台", subtitle:"手動注入比賽事件，更新數據、徽章、稀有度與 metadata。", nav:"預言機", sub:"Oracle"},
+      {id:"datahub", icon:"資", title:"資料中心", subtitle:"整理 PDF 主線：運動選擇、資料欄位、鏈上鏈下分工與授權風險。", nav:"資料中心", sub:"Data Hub"},
+      {id:"studio", icon:"作", title:"卡片工作坊", subtitle:"建立自訂示範卡，測試資料欄位與動態收藏流程。", nav:"工作坊", sub:"Studio"}
+    ];
+
+    // Player / Card data expansion
+    const VerifiedSocials = {
+      "Lionel Messi":{instagram:"https://www.instagram.com/leomessi/", x:"", facebook:"https://www.facebook.com/leomessi/", youtube:"", tiktok:"", officialWebsite:"", leagueProfile:"https://www.mlssoccer.com/players/lionel-messi/", teamProfile:"https://www.intermiamicf.com/players/lionel-messi/"},
+      "Kylian Mbappe":{instagram:"https://www.instagram.com/k.mbappe/", x:"https://x.com/KMbappe", facebook:"https://www.facebook.com/kylianmbappeofficiel/", youtube:"", tiktok:"", officialWebsite:"", leagueProfile:"", teamProfile:"https://www.realmadrid.com/en-US/football/first-team/players/kylian-mbappe"},
+      "Erling Haaland":{instagram:"https://www.instagram.com/erling/", x:"https://x.com/ErlingHaaland", facebook:"https://www.facebook.com/erlinghaaland/", youtube:"", tiktok:"", officialWebsite:"", leagueProfile:"", teamProfile:"https://www.mancity.com/players/erling-haaland"},
+      "LeBron James":{instagram:"https://www.instagram.com/kingjames/", x:"https://x.com/KingJames", facebook:"https://www.facebook.com/LeBron/", youtube:"", tiktok:"", officialWebsite:"", leagueProfile:"https://www.nba.com/player/2544/lebron-james", teamProfile:""},
+      "Stephen Curry":{instagram:"https://www.instagram.com/stephencurry30/", x:"https://x.com/StephenCurry30", facebook:"https://www.facebook.com/StephenCurryOfficial/", youtube:"", tiktok:"", officialWebsite:"", leagueProfile:"https://www.nba.com/player/201939/stephen-curry", teamProfile:""},
+      "Nikola Jokic":{instagram:"", x:"", facebook:"", youtube:"", tiktok:"", officialWebsite:"", leagueProfile:"https://www.nba.com/player/203999/nikola-jokic", teamProfile:""},
+      "Shohei Ohtani":{instagram:"https://www.instagram.com/shoheiohtani/", x:"", facebook:"", youtube:"", tiktok:"", officialWebsite:"", leagueProfile:"https://www.mlb.com/player/shohei-ohtani-660271", teamProfile:""},
+      "Aaron Judge":{instagram:"https://www.instagram.com/thejudge44/", x:"https://x.com/TheJudge44", facebook:"", youtube:"", tiktok:"", officialWebsite:"", leagueProfile:"https://www.mlb.com/player/aaron-judge-592450", teamProfile:""},
+      "Juan Soto":{instagram:"", x:"", facebook:"", youtube:"", tiktok:"", officialWebsite:"", leagueProfile:"https://www.mlb.com/player/juan-soto-665742", teamProfile:""}
+    };
+
+    const TopRosters = {
+      soccer:[
+        ["Jude Bellingham","Real Madrid","La Liga","Midfielder","5","England","Europe"],["Vinicius Junior","Real Madrid","La Liga","Forward","7","Brazil","South America"],["Rodri","Manchester City","Premier League","Defensive Midfielder","16","Spain","Europe"],["Lamine Yamal","FC Barcelona","La Liga","Winger","19","Spain","Europe"],["Mohamed Salah","Liverpool","Premier League","Forward","11","Egypt","Africa"],["Harry Kane","Bayern Munich","Bundesliga","Striker","9","England","Europe"],["Bukayo Saka","Arsenal","Premier League","Winger","7","England","Europe"],["Jamal Musiala","Bayern Munich","Bundesliga","Attacking Midfielder","42","Germany","Europe"],["Florian Wirtz","Bayer Leverkusen","Bundesliga","Attacking Midfielder","10","Germany","Europe"],["Pedri","FC Barcelona","La Liga","Midfielder","8","Spain","Europe"],["Federico Valverde","Real Madrid","La Liga","Midfielder","8","Uruguay","South America"],["Lautaro Martinez","Inter Milan","Serie A","Striker","10","Argentina","South America"],["Robert Lewandowski","FC Barcelona","La Liga","Striker","9","Poland","Europe"],["Phil Foden","Manchester City","Premier League","Midfielder","47","England","Europe"],["Kevin De Bruyne","Manchester City","Premier League","Midfielder","17","Belgium","Europe"],["Bruno Fernandes","Manchester United","Premier League","Midfielder","8","Portugal","Europe"],["Bernardo Silva","Manchester City","Premier League","Midfielder","20","Portugal","Europe"],["Martin Odegaard","Arsenal","Premier League","Midfielder","8","Norway","Europe"],["Declan Rice","Arsenal","Premier League","Midfielder","41","England","Europe"],["Cole Palmer","Chelsea","Premier League","Attacking Midfielder","20","England","Europe"],["Rafael Leao","AC Milan","Serie A","Winger","10","Portugal","Europe"],["Victor Osimhen","Galatasaray","Super Lig","Striker","45","Nigeria","Africa"],["Khvicha Kvaratskhelia","Paris Saint-Germain","Ligue 1","Winger","7","Georgia","Europe"],["Antoine Griezmann","Atletico Madrid","La Liga","Forward","7","France","Europe"],["Julian Alvarez","Atletico Madrid","La Liga","Forward","19","Argentina","South America"],["Virgil van Dijk","Liverpool","Premier League","Centre Back","4","Netherlands","Europe"],["William Saliba","Arsenal","Premier League","Centre Back","2","France","Europe"],["Ruben Dias","Manchester City","Premier League","Centre Back","3","Portugal","Europe"],["Achraf Hakimi","Paris Saint-Germain","Ligue 1","Right Back","2","Morocco","Africa"],["Theo Hernandez","AC Milan","Serie A","Left Back","19","France","Europe"],["Trent Alexander-Arnold","Real Madrid","La Liga","Right Back","12","England","Europe"],["Alisson Becker","Liverpool","Premier League","Goalkeeper","1","Brazil","South America"],["Thibaut Courtois","Real Madrid","La Liga","Goalkeeper","1","Belgium","Europe"],["Gianluigi Donnarumma","Paris Saint-Germain","Ligue 1","Goalkeeper","99","Italy","Europe"],["Emiliano Martinez","Aston Villa","Premier League","Goalkeeper","23","Argentina","South America"],["Son Heung-min","Tottenham Hotspur","Premier League","Forward","7","South Korea","Asia"],["Cristiano Ronaldo","Al Nassr","Saudi Pro League","Forward","7","Portugal","Europe"],["Neymar Jr.","Santos","Brasileirao","Forward","10","Brazil","South America"],["Luis Diaz","Liverpool","Premier League","Winger","7","Colombia","South America"],["Frenkie de Jong","FC Barcelona","La Liga","Midfielder","21","Netherlands","Europe"],["Joao Cancelo","Al Hilal","Saudi Pro League","Full Back","20","Portugal","Europe"],["Joshua Kimmich","Bayern Munich","Bundesliga","Midfielder","6","Germany","Europe"],["Mike Maignan","AC Milan","Serie A","Goalkeeper","16","France","Europe"],["Nico Williams","Athletic Club","La Liga","Winger","10","Spain","Europe"],["Raphinha","FC Barcelona","La Liga","Winger","11","Brazil","South America"],["Alexander Isak","Newcastle United","Premier League","Striker","14","Sweden","Europe"],["Ousmane Dembele","Paris Saint-Germain","Ligue 1","Winger","10","France","Europe"],["Ilkay Gundogan","Manchester City","Premier League","Midfielder","19","Germany","Europe"],["Alexis Mac Allister","Liverpool","Premier League","Midfielder","10","Argentina","South America"],["Darwin Nunez","Liverpool","Premier League","Striker","9","Uruguay","South America"]
+      ],
+      basketball:[
+        ["Giannis Antetokounmpo","Milwaukee Bucks","NBA","Forward","34","Greece","Europe"],["Luka Doncic","Los Angeles Lakers","NBA","Guard","77","Slovenia","Europe"],["Shai Gilgeous-Alexander","Oklahoma City Thunder","NBA","Guard","2","Canada","North America"],["Jayson Tatum","Boston Celtics","NBA","Forward","0","United States","North America"],["Joel Embiid","Philadelphia 76ers","NBA","Center","21","Cameroon","Africa"],["Kevin Durant","Phoenix Suns","NBA","Forward","35","United States","North America"],["Anthony Edwards","Minnesota Timberwolves","NBA","Guard","5","United States","North America"],["Victor Wembanyama","San Antonio Spurs","NBA","Center","1","France","Europe"],["Jalen Brunson","New York Knicks","NBA","Guard","11","United States","North America"],["Devin Booker","Phoenix Suns","NBA","Guard","1","United States","North America"],["Donovan Mitchell","Cleveland Cavaliers","NBA","Guard","45","United States","North America"],["Anthony Davis","Dallas Mavericks","NBA","Forward / Center","3","United States","North America"],["Kawhi Leonard","LA Clippers","NBA","Forward","2","United States","North America"],["Jaylen Brown","Boston Celtics","NBA","Wing","7","United States","North America"],["Ja Morant","Memphis Grizzlies","NBA","Guard","12","United States","North America"],["Damian Lillard","Milwaukee Bucks","NBA","Guard","0","United States","North America"],["Tyrese Haliburton","Indiana Pacers","NBA","Guard","0","United States","North America"],["Trae Young","Atlanta Hawks","NBA","Guard","11","United States","North America"],["Kyrie Irving","Dallas Mavericks","NBA","Guard","11","United States","North America"],["Zion Williamson","New Orleans Pelicans","NBA","Forward","1","United States","North America"],["Paolo Banchero","Orlando Magic","NBA","Forward","5","United States","North America"],["Chet Holmgren","Oklahoma City Thunder","NBA","Center","7","United States","North America"],["Bam Adebayo","Miami Heat","NBA","Center","13","United States","North America"],["Jimmy Butler","Golden State Warriors","NBA","Forward","10","United States","North America"],["De'Aaron Fox","San Antonio Spurs","NBA","Guard","4","United States","North America"],["LaMelo Ball","Charlotte Hornets","NBA","Guard","1","United States","North America"],["Karl-Anthony Towns","New York Knicks","NBA","Center","32","Dominican Republic","North America"],["Domantas Sabonis","Sacramento Kings","NBA","Center","11","Lithuania","Europe"],["Jamal Murray","Denver Nuggets","NBA","Guard","27","Canada","North America"],["Jaren Jackson Jr.","Memphis Grizzlies","NBA","Forward / Center","13","United States","North America"],["Pascal Siakam","Indiana Pacers","NBA","Forward","43","Cameroon","Africa"],["Paul George","Philadelphia 76ers","NBA","Wing","8","United States","North America"],["Rudy Gobert","Minnesota Timberwolves","NBA","Center","27","France","Europe"],["Alperen Sengun","Houston Rockets","NBA","Center","28","Turkey","Europe"],["Scottie Barnes","Toronto Raptors","NBA","Forward","4","United States","North America"],["Cade Cunningham","Detroit Pistons","NBA","Guard","2","United States","North America"],["Tyrese Maxey","Philadelphia 76ers","NBA","Guard","0","United States","North America"],["Franz Wagner","Orlando Magic","NBA","Forward","22","Germany","Europe"],["Mikal Bridges","New York Knicks","NBA","Wing","25","United States","North America"],["Brandon Ingram","Toronto Raptors","NBA","Forward","7","United States","North America"],["Lauri Markkanen","Utah Jazz","NBA","Forward","23","Finland","Europe"],["Jrue Holiday","Boston Celtics","NBA","Guard","4","United States","North America"],["Darius Garland","Cleveland Cavaliers","NBA","Guard","10","United States","North America"],["Evan Mobley","Cleveland Cavaliers","NBA","Forward / Center","4","United States","North America"],["DeMar DeRozan","Sacramento Kings","NBA","Wing","10","United States","North America"],["Julius Randle","Minnesota Timberwolves","NBA","Forward","30","United States","North America"],["Kristaps Porzingis","Atlanta Hawks","NBA","Center","8","Latvia","Europe"],["Derrick White","Boston Celtics","NBA","Guard","9","United States","North America"],["OG Anunoby","New York Knicks","NBA","Wing","8","United Kingdom","Europe"],["Austin Reaves","Los Angeles Lakers","NBA","Guard","15","United States","North America"]
+      ],
+      baseball:[
+        ["Bobby Witt Jr.","Kansas City Royals","MLB","Shortstop","7","United States","North America"],["Mookie Betts","Los Angeles Dodgers","MLB","Shortstop / Outfield","50","United States","North America"],["Gunnar Henderson","Baltimore Orioles","MLB","Shortstop","2","United States","North America"],["Freddie Freeman","Los Angeles Dodgers","MLB","First Base","5","United States","North America"],["Yordan Alvarez","Houston Astros","MLB","DH / Outfield","44","Cuba","North America"],["Ronald Acuna Jr.","Atlanta Braves","MLB","Outfield","13","Venezuela","South America"],["Jose Ramirez","Cleveland Guardians","MLB","Third Base","11","Dominican Republic","North America"],["Bryce Harper","Philadelphia Phillies","MLB","First Base","3","United States","North America"],["Julio Rodriguez","Seattle Mariners","MLB","Outfield","44","Dominican Republic","North America"],["Corey Seager","Texas Rangers","MLB","Shortstop","5","United States","North America"],["Trea Turner","Philadelphia Phillies","MLB","Shortstop","7","United States","North America"],["Francisco Lindor","New York Mets","MLB","Shortstop","12","Puerto Rico","North America"],["Fernando Tatis Jr.","San Diego Padres","MLB","Outfield","23","Dominican Republic","North America"],["Vladimir Guerrero Jr.","Toronto Blue Jays","MLB","First Base","27","Dominican Republic","North America"],["Corbin Carroll","Arizona Diamondbacks","MLB","Outfield","7","United States","North America"],["Kyle Tucker","Chicago Cubs","MLB","Outfield","30","United States","North America"],["Rafael Devers","San Francisco Giants","MLB","Third Base","11","Dominican Republic","North America"],["Pete Alonso","New York Mets","MLB","First Base","20","United States","North America"],["Elly De La Cruz","Cincinnati Reds","MLB","Shortstop","44","Dominican Republic","North America"],["Adley Rutschman","Baltimore Orioles","MLB","Catcher","35","United States","North America"],["Cal Raleigh","Seattle Mariners","MLB","Catcher","29","United States","North America"],["Paul Skenes","Pittsburgh Pirates","MLB","Starting Pitcher","30","United States","North America"],["Tarik Skubal","Detroit Tigers","MLB","Starting Pitcher","29","United States","North America"],["Zack Wheeler","Philadelphia Phillies","MLB","Starting Pitcher","45","United States","North America"],["Gerrit Cole","New York Yankees","MLB","Starting Pitcher","45","United States","North America"],["Blake Snell","Los Angeles Dodgers","MLB","Starting Pitcher","7","United States","North America"],["Chris Sale","Atlanta Braves","MLB","Starting Pitcher","51","United States","North America"],["Corbin Burnes","Arizona Diamondbacks","MLB","Starting Pitcher","39","United States","North America"],["Logan Webb","San Francisco Giants","MLB","Starting Pitcher","62","United States","North America"],["Max Fried","New York Yankees","MLB","Starting Pitcher","54","United States","North America"],["Yoshinobu Yamamoto","Los Angeles Dodgers","MLB","Starting Pitcher","18","Japan","Asia"],["Roki Sasaki","Los Angeles Dodgers","MLB","Starting Pitcher","11","Japan","Asia"],["Jacob deGrom","Texas Rangers","MLB","Starting Pitcher","48","United States","North America"],["Dylan Cease","San Diego Padres","MLB","Starting Pitcher","84","United States","North America"],["Sandy Alcantara","Miami Marlins","MLB","Starting Pitcher","22","Dominican Republic","North America"],["Spencer Strider","Atlanta Braves","MLB","Starting Pitcher","65","United States","North America"],["Aaron Nola","Philadelphia Phillies","MLB","Starting Pitcher","27","United States","North America"],["Will Smith","Los Angeles Dodgers","MLB","Catcher","16","United States","North America"],["Salvador Perez","Kansas City Royals","MLB","Catcher","13","Venezuela","South America"],["Ketel Marte","Arizona Diamondbacks","MLB","Second Base","4","Dominican Republic","North America"],["Jose Altuve","Houston Astros","MLB","Second Base","27","Venezuela","South America"],["Matt Olson","Atlanta Braves","MLB","First Base","28","United States","North America"],["Manny Machado","San Diego Padres","MLB","Third Base","13","United States","North America"],["Bo Bichette","Toronto Blue Jays","MLB","Shortstop","11","United States","North America"],["Luis Robert Jr.","Chicago White Sox","MLB","Outfield","88","Cuba","North America"],["George Springer","Toronto Blue Jays","MLB","Outfield","4","United States","North America"],["Alex Bregman","Boston Red Sox","MLB","Third Base","2","United States","North America"],["Kyle Schwarber","Philadelphia Phillies","MLB","DH / Outfield","12","United States","North America"],["Jackson Chourio","Milwaukee Brewers","MLB","Outfield","11","Venezuela","South America"],["Wyatt Langford","Texas Rangers","MLB","Outfield","36","United States","North America"]
+      ]
+    };
+
+    function buildStarterCards(){
+      enrichCards(FeaturedCards);
+      const cards = [...FeaturedCards];
+      const existing = new Set(cards.map((card) => card.playerName));
+      Object.entries(TopRosters).forEach(([sport, rows]) => {
+        let rank = cards.filter((card) => card.sport === sport).length + 1;
+        rows.forEach((row) => {
+          if(cards.filter((card) => card.sport === sport).length >= 50) return;
+          if(existing.has(row[0])) return;
+          const card = makeGeneratedCard(sport, row, rank);
+          cards.push(card);
+          existing.add(card.playerName);
+          rank += 1;
+        });
+      });
+      return cards;
+    }
+
+    function enrichCards(cards){
+      cards.forEach((card, index) => enrichCard(card, index + 1));
+    }
+
+    function makeGeneratedCard(sport, row, rank){
+      const [playerName, team, league, position, jerseyNumber, nationality, continent] = row;
+      const code = sport === "soccer" ? "SC" : sport === "basketball" ? "BK" : "BB";
+      const rarity = rarityByRank(rank);
+      const card = {
+        id:`card_${sport}_${slug(playerName)}`,
+        tokenId:`DSP-2026-${code}-${String(rank).padStart(3,"0")}`,
+        sport, playerName, team, teamCode:teamCode(team), league, position, jerseyNumber, nationality, continent,
+        rarity, price:priceByRank(rank, sport), owner:null, serial:`${code}-${String(rank).padStart(3,"0")}/${rarity === "oneOfOne" ? "001" : rarity === "limited" ? "500" : rarity === "legendary" ? "700" : "1500"}`,
+        status:"Active", version:1, lastUpdate:"2026-05-20T00:00:00+08:00",
+        imageUrl:"", logoUrl:"", teamColors:teamColors(team, sport), badges:badgesFor(sport, position, rank),
+        stats:statsByRank(sport, rank, position),
+        metadata:{sourceUrl:leagueHub(sport), dataSource:"demo; pending official verification; needs source verification", animationUrl:`dsp-player-card-v2.html#${slug(playerName)}`},
+        history:[{at:"2026-05-20T00:00:00+08:00", type:"SEED_PENDING_VERIFY", note:"Expanded demo roster card generated from public top-player context; official biography/social verification pending."}],
+        licenseNote:"Demo roster entry. Official images, marks, social accounts and live statistics require formal rights verification before commercial use."
+      };
+      enrichCard(card, rank);
+      return card;
+    }
+
+    function enrichCard(card, rank = 25){
+      card.birthDate = card.birthDate || "pending official verification";
+      card.birthPlace = card.birthPlace || "pending official verification";
+      card.height = card.height || "pending official verification";
+      card.weight = card.weight || "pending official verification";
+      card.skills = card.skills || skillsFor(card.sport, card.position, rank);
+      card.abilityStats = card.abilityStats || abilityFor(card.sport, card.position, card.rarity, rank);
+      card.majorAwards = card.majorAwards || awardsFor(card.sport, rank, card.playerName);
+      card.records = card.records || recordsFor(card.sport, rank, card.playerName);
+      card.careerHighlights = card.careerHighlights || highlightsFor(card);
+      card.playStyle = card.playStyle || playStyleFor(card);
+      card.collectorValue = card.collectorValue || collectorTextFor(card);
+      card.careerSummary = card.careerSummary || summaryFor(card);
+      card.biography = card.biography || biographyFor(card);
+      card.socialLinks = {...emptySocialLinks(), ...(VerifiedSocials[card.playerName] || {}), ...(card.socialLinks || {})};
+      card.officialSources = card.officialSources || officialSourcesFor(card);
+      card.marketData = card.marketData || marketDataFor(card);
+      card.metadata = {...(card.metadata || {}), tokenURI:`ipfs://demo/dynamic-player-card/${card.tokenId}`};
+      card.metadataVersions = card.metadataVersions || [{version:card.version || 1, at:card.lastUpdate || nowISO(), reason:"Initial metadata snapshot"}];
+      card.sourceStatus = card.sourceStatus || (VerifiedSocials[card.playerName] ? "seed profile partly verified from official/league pages" : "demo; pending official verification; needs source verification");
+      return card;
+    }
+
+    // StarterCards is initialized after the featured card seed list below.
+
+    function rarityByRank(rank){
+      if(rank === 1) return "oneOfOne";
+      if(rank <= 3) return "limited";
+      if(rank <= 7) return "mythic";
+      if(rank <= 14) return "legendary";
+      if(rank <= 22) return "epic";
+      if(rank <= 32) return "superRare";
+      if(rank <= 42) return "rare";
+      if(rank <= 48) return "uncommon";
+      return "common";
+    }
+
+    function priceByRank(rank, sport){
+      const base = sport === "basketball" ? .42 : sport === "baseball" ? .38 : .4;
+      return Number((base + Math.max(0, 52 - rank) * .037).toFixed(2));
+    }
+
+    function statsByRank(sport, rank, position){
+      const boost = Math.max(0, 54 - rank);
+      if(sport === "soccer") return {goals:Math.round(5 + boost * .72), assists:Math.round(3 + boost * .36), appearances:Math.round(18 + boost * .18), shots:Math.round(30 + boost * 1.8), passPct:Number((78 + boost * .28).toFixed(1)), minutes:Math.round(1120 + boost * 34)};
+      if(sport === "basketball") return {points:Number((15 + boost * .32).toFixed(1)), rebounds:Number((3.8 + boost * .14).toFixed(1)), assists:Number((3.2 + boost * .13).toFixed(1)), steals:Number((.7 + boost * .012).toFixed(1)), blocks:Number((.3 + boost * .012).toFixed(1)), fgPct:Number((43 + boost * .18).toFixed(1))};
+      const pitcher = /Pitcher/i.test(position);
+      if(pitcher) return {avg:0, homeRuns:0, rbi:0, ops:0, era:Number((3.7 - boost * .032).toFixed(2)), whip:Number((1.25 - boost * .006).toFixed(2)), strikeouts:Math.round(120 + boost * 3.5)};
+      return {avg:Number((.245 + boost * .0017).toFixed(3)), homeRuns:Math.round(14 + boost * .63), rbi:Math.round(52 + boost * 1.25), ops:Number((.735 + boost * .0062).toFixed(3)), stolenBases:Math.round(4 + boost * .36), strikeouts:0};
+    }
+
+    function abilityFor(sport, position, rarity, rank){
+      const tier = Rarity[rarity]?.weight || 1;
+      const top = Math.round(98 - rank * .55 + tier * 1.3);
+      const archetype = /Goalkeeper|Pitcher|Center Back|Defensive|Catcher/i.test(position) ? "defense" : /Winger|Guard|Shortstop|Outfield/i.test(position) ? "speed" : /Striker|Forward|DH|First Base/i.test(position) ? "attack" : "skill";
+      const base = clamp(top, 72, 99);
+      return {
+        ovr:base,
+        attack:clamp(base + (archetype === "attack" ? 4 : sport === "baseball" ? 2 : 0), 55, 99),
+        defense:clamp(base + (archetype === "defense" ? 4 : -2), 50, 99),
+        speed:clamp(base + (archetype === "speed" ? 4 : -1), 50, 99),
+        skill:clamp(base + (archetype === "skill" ? 4 : 1), 55, 99),
+        stamina:clamp(base - 1 + (rank < 15 ? 2 : 0), 55, 99),
+        clutch:clamp(base + (rank < 10 ? 4 : 0), 55, 99),
+        potential:clamp(base + (rank > 20 ? 3 : 1), 55, 99),
+        marketHeat:clamp(94 - rank * .6 + tier * 2, 45, 99)
+      };
+    }
+
+    function skillsFor(sport, position, rank){
+      const pool = sport === "soccer"
+        ? ["Vision Pass","Finisher","Golden Boot DNA","Captain Mentality","Speed Demon","Defensive Wall","Playmaker","Record Breaker"]
+        : sport === "basketball"
+          ? ["Deep Range","Triple-Double Engine","Clutch Shot","Two-Way Legend","Playmaker","Defensive Wall","Finisher","Captain Mentality"]
+          : ["Power Hitter","Home Run Threat","Record Breaker","Clutch Shot","Speed Demon","Defensive Wall","Playmaker","Captain Mentality"];
+      const offset = Math.abs(hashCode(position)) % pool.length;
+      const count = rank < 10 ? 4 : rank < 28 ? 3 : 2;
+      return Array.from({length:count}, (_, index) => pool[(offset + index) % pool.length]);
+    }
+
+    function badgesFor(sport, position, rank){
+      const first = sport === "soccer" ? "Global XI" : sport === "basketball" ? "All-NBA Tier" : "All-Star Tier";
+      const role = /Goalkeeper|Pitcher|Catcher|Defensive|Back|Center/i.test(position) ? "Defensive Wall" : /Guard|Midfielder|Shortstop/i.test(position) ? "Playmaker" : "Finisher";
+      return [first, role, rank <= 10 ? "Market Heat" : "Scout Pick"];
+    }
+
+    function awardsFor(sport, rank, name){
+      if(rank <= 3) return ["Global superstar tier", "MVP / Ballon d'Or conversation", "Signature collector edition"];
+      if(rank <= 12) return ["League award contender", "All-star or elite team recognition", "Featured chase card"];
+      if(sport === "baseball") return ["All-Star caliber profile", "Advanced-stat standout", "Postseason upside"];
+      if(sport === "basketball") return ["All-NBA caliber profile", "Franchise cornerstone traits", "Playoff impact"];
+      return ["International-level profile", "Club cornerstone traits", "Major competition upside"];
+    }
+
+    function recordsFor(sport, rank, name){
+      const headline = rank <= 5 ? "Historic pace / generational profile" : rank <= 18 ? "Elite single-season and playoff indicators" : "Rising or established top-50 profile";
+      return [headline, `${name} card record tracked by demo oracle history`, "Official record verification pending"];
+    }
+
+    function highlightsFor(card){
+      return [
+        `${card.playerName} is modeled as a top-tier ${card.position} in ${card.league}.`,
+        `The card tracks ${Sports[card.sport]?.label || card.sport} performance signals, special-event badges and metadata versions.`,
+        `Collector demand is weighted by rarity, market heat, skill tags and social influence.`
+      ];
+    }
+
+    function summaryFor(card){
+      return `${card.playerName} is positioned as a premium ${card.sport} collectible from ${card.team}, combining performance identity, market heat, rarity and dynamic metadata into one evolving player card.`;
+    }
+
+    function biographyFor(card){
+      const sportLabel = Sports[card.sport]?.label || card.sport;
+      return [
+        `${card.playerName} enters this Dynamic NFT database as a ${nationalityText(card.nationality)} ${sportLabel} star associated with ${card.team} in ${card.league}. The profile is structured like an official player page: background fields, team context, performance identity, awards, records and source notes are kept together so the card can be used for presentation and future verification.`,
+        `Early-career details such as birth date, birth place, height and weight are intentionally marked pending when they have not been verified from official league or club sources in this local build. The card still preserves the data slots so a production version can replace demo text with licensed, audited biography copy.`,
+        `Professionally, this card emphasizes the player's role as ${card.position}. The front card highlights OVR, major skills and live market signals, while the detail modal keeps longer career story, awards, records, play style and collector value analysis.`,
+        `As a collectible, ${card.playerName} is valuable because the card can evolve. Oracle events may upgrade stats, ability ratings, market heat, rarity and metadata history, turning a static player profile into a dynamic digital artwork with an auditable transaction trail.`
+      ].join("\n\n");
+    }
+
+    function playStyleFor(card){
+      const skills = (card.skills || []).join(", ");
+      return `${card.playerName} is represented as a ${card.position} whose card identity centers on ${skills || "elite fundamentals"}. The ability model balances performance traits with collectible readability rather than claiming live scouting accuracy.`;
+    }
+
+    function collectorTextFor(card){
+      return `Collectors may value this card for name recognition, ${Rarity[card.rarity]?.label || card.rarity} scarcity, ${card.abilityStats?.marketHeat || 70} market heat and its ability to record event-driven upgrades. Risk remains tied to licensing, live-data verification and market volatility.`;
+    }
+
+    function officialSourcesFor(card){
+      const links = VerifiedSocials[card.playerName] || {};
+      return [
+        {label:"League / team profile", url:links.leagueProfile || links.teamProfile || card.metadata?.sourceUrl || leagueHub(card.sport), status:links.leagueProfile || links.teamProfile ? "verified seed link" : "pending official verification"},
+        {label:"Social accounts", url:links.instagram || links.x || "", status:links.instagram || links.x ? "seed social link" : "pending official verification"},
+        {label:"Data source status", url:"", status:card.sourceStatus || "demo; needs source verification"}
+      ];
+    }
+
+    function marketDataFor(card){
+      const heat = card.abilityStats?.marketHeat || 70;
+      return {
+        primary:true,
+        listingType:card.owner ? "secondary" : "primary",
+        listed:false,
+        askingPrice:Number((card.price * (Rarity[card.rarity]?.multiplier || 1)).toFixed(2)),
+        floorPrice:Number((card.price * .82).toFixed(2)),
+        lastSale:Number((card.price * .96).toFixed(2)),
+        volume:Number((card.price * (3 + heat / 11)).toFixed(2)),
+        owner:card.owner || "issuer",
+        creatorRoyalty:5,
+        gasFee:Number((.002 + heat / 100000).toFixed(4)),
+        marketHeat:heat,
+        socialInfluence:clamp(50 + (card.socialLinks && Object.values(card.socialLinks).filter(Boolean).length * 9) + (card.abilityStats?.ovr || 75) / 4, 35, 99),
+        collectorDemand:clamp(55 + (Rarity[card.rarity]?.weight || 1) * 7 + heat / 6, 40, 99),
+        watchlisted:false,
+        offers:[],
+        priceHistory:[]
+      };
+    }
+
+    function emptySocialLinks(){
+      return {instagram:"", x:"", facebook:"", youtube:"", tiktok:"", officialWebsite:"", leagueProfile:"", teamProfile:""};
+    }
+
+    function leagueHub(sport){
+      if(sport === "basketball") return "https://www.nba.com/players";
+      if(sport === "baseball") return "https://www.mlb.com/players";
+      return "https://www.fifa.com/";
+    }
+
+    function teamColors(team, sport){
+      const palette = [["#3fd0c9","#e6b85c"],["#6aa7ff","#f7f2e8"],["#e55d4f","#e6b85c"],["#b590ff","#3fd0c9"],["#78c66d","#e6b85c"]];
+      return palette[Math.abs(hashCode(team + sport)) % palette.length];
+    }
+
+    function teamCode(team){
+      return String(team || "DSP").replace(/[^A-Za-z ]/g,"").split(/\s+/).filter(Boolean).map((part) => part[0]).join("").slice(0,3).toUpperCase() || "DSP";
+    }
+
+    function nationalityText(value){
+      return value ? `${value}-connected` : "international";
+    }
+
+    function slug(value){
+      return String(value || "card").toLowerCase().replace(/[^a-z0-9]+/g,"_").replace(/^_+|_+$/g,"");
+    }
+
+    function hashCode(value){
+      return String(value).split("").reduce((hash, char) => ((hash << 5) - hash + char.charCodeAt(0)) | 0, 0);
+    }
+
+    const Sports = {
+      soccer:{
+        label:"足球",
+        short:"Football",
+        tone:"#3fd0c9",
+        stats:["goals","assists","appearances","shots","passPct","minutes"],
+        defaultStats:{goals:8, assists:5, appearances:12, shots:38, passPct:84.2, minutes:980}
+      },
+      basketball:{
+        label:"籃球",
+        short:"Basketball",
+        tone:"#e6b85c",
+        stats:["points","rebounds","assists","steals","blocks","fgPct"],
+        defaultStats:{points:24.8, rebounds:7.2, assists:7.6, steals:1.1, blocks:.6, fgPct:51.2}
+      },
+      baseball:{
+        label:"棒球",
+        short:"Baseball",
+        tone:"#e55d4f",
+        stats:["avg","homeRuns","rbi","ops","stolenBases","strikeouts"],
+        defaultStats:{avg:.292, homeRuns:34, rbi:92, ops:.948, stolenBases:12, strikeouts:0}
+      }
+    };
+
+    const Rarity = {
+      common:{label:"Common", color:"#a7b1b7", glow:"rgba(167,177,183,.20)", multiplier:1, weight:1, drop:"46%", market:"Entry-level star card"},
+      uncommon:{label:"Uncommon", color:"#78c66d", glow:"rgba(120,198,109,.22)", multiplier:1.12, weight:1.35, drop:"24%", market:"Early collector pick"},
+      rare:{label:"Rare", color:"#3fd0c9", glow:"rgba(63,208,201,.24)", multiplier:1.28, weight:2, drop:"15%", market:"High-upside active star"},
+      superRare:{label:"Super Rare", color:"#6aa7ff", glow:"rgba(106,167,255,.25)", multiplier:1.46, weight:2.5, drop:"8%", market:"Premium starter"},
+      epic:{label:"Epic", color:"#b590ff", glow:"rgba(181,144,255,.27)", multiplier:1.72, weight:3, drop:"4%", market:"Signature performance card"},
+      legendary:{label:"Legendary", color:"#e6b85c", glow:"rgba(230,184,92,.30)", multiplier:2.25, weight:4, drop:"2%", market:"GOAT / MVP tier"},
+      mythic:{label:"Mythic", color:"#ff6b5f", glow:"rgba(255,107,95,.34)", multiplier:2.85, weight:4.7, drop:"0.7%", market:"Record-breaking chase card"},
+      limited:{label:"Limited", color:"#ff8db4", glow:"rgba(255,141,180,.34)", multiplier:3.2, weight:5.2, drop:"0.25%", market:"Numbered event edition"},
+      oneOfOne:{label:"One of One", color:"#f7f2e8", glow:"rgba(247,242,232,.42)", multiplier:5.6, weight:7, drop:"1/1", market:"Unique grail card"}
+    };
+    const rarityOrder = ["common","uncommon","rare","superRare","epic","legendary","mythic","limited","oneOfOne"];
+
+    const StatLabels = {
+      goals:"GOALS", assists:"ASSISTS", appearances:"APP", shots:"SHOTS", passPct:"PASS%", minutes:"MIN",
+      points:"PTS", rebounds:"REB", steals:"STL", blocks:"BLK", fgPct:"FG%",
+      avg:"AVG", homeRuns:"HR", rbi:"RBI", ops:"OPS", stolenBases:"SB", strikeouts:"K",
+      era:"ERA", whip:"WHIP"
+    };
+
+    const FeaturedCards = [
+      {
+        id:"card_soccer_messi", tokenId:"DSP-2026-SC-010", sport:"soccer", playerName:"Lionel Messi",
+        team:"Inter Miami CF", teamCode:"MIA", league:"MLS", position:"Forward / Midfielder", jerseyNumber:"10",
+        nationality:"Argentina", continent:"South America", rarity:"limited", price:2.35, owner:null,
+        serial:"SC-010/500", status:"Active", version:1, lastUpdate:"2026-05-20T00:00:00+08:00",
+        imageUrl:"https://a.espncdn.com/i/headshots/soccer/players/full/45843.png",
+        logoUrl:"https://a.espncdn.com/i/teamlogos/soccer/500/20232.png",
+        teamColors:["#f7b5cd","#1f1f1f"], badges:["World Champion","8x Ballon d'Or","MLS Icon"],
+        stats:{goals:10, assists:8, appearances:13, shots:44, passPct:85.6, minutes:1035},
+        metadata:{sourceUrl:"https://www.intermiamicf.com/players/lionel-messi/", dataSource:SOURCE_NOTE, animationUrl:"dsp-player-card-v2.html#card_soccer_messi"},
+        history:[{at:"2026-05-20T00:00:00+08:00", type:"SEED", note:"Official profile anchored demo card created."}],
+        licenseNote:"Uses remote profile-style imagery for classroom demonstration only."
+      },
+      {
+        id:"card_soccer_mbappe", tokenId:"DSP-2026-SC-007", sport:"soccer", playerName:"Kylian Mbappe",
+        team:"Real Madrid", teamCode:"RMA", league:"La Liga", position:"Forward", jerseyNumber:"10",
+        nationality:"France", continent:"Europe", rarity:"legendary", price:1.95, owner:null,
+        serial:"SC-007/700", status:"Active", version:1, lastUpdate:"2026-05-20T00:00:00+08:00",
+        imageUrl:"https://a.espncdn.com/i/headshots/soccer/players/full/231388.png",
+        logoUrl:"https://a.espncdn.com/i/teamlogos/soccer/500/86.png",
+        teamColors:["#ffffff","#d5b45f"], badges:["Golden Boot Watch","UCL Threat","France Captain"],
+        stats:{goals:41, assists:3, appearances:41, shots:149, passPct:86.1, minutes:3419},
+        metadata:{sourceUrl:"https://www.realmadrid.com/en-US/football/first-team/players/kylian-mbappe", dataSource:SOURCE_NOTE, animationUrl:"dsp-player-card-v2.html#card_soccer_mbappe"},
+        history:[{at:"2026-05-20T00:00:00+08:00", type:"SEED", note:"Real Madrid official profile snapshot normalized for demo."}],
+        licenseNote:"Team and player assets remain owned by their respective rights holders."
+      },
+      {
+        id:"card_soccer_haaland", tokenId:"DSP-2026-SC-009", sport:"soccer", playerName:"Erling Haaland",
+        team:"Manchester City", teamCode:"MCI", league:"Premier League", position:"Striker", jerseyNumber:"9",
+        nationality:"Norway", continent:"Europe", rarity:"legendary", price:1.88, owner:null,
+        serial:"SC-009/700", status:"Active", version:1, lastUpdate:"2026-05-20T00:00:00+08:00",
+        imageUrl:"https://a.espncdn.com/i/headshots/soccer/players/full/253989.png",
+        logoUrl:"https://a.espncdn.com/i/teamlogos/soccer/500/382.png",
+        teamColors:["#6cabdd","#1c2c5b"], badges:["Power Striker","City 2034","Golden Boot DNA"],
+        stats:{goals:29, assists:5, appearances:33, shots:116, passPct:78.4, minutes:2780},
+        metadata:{sourceUrl:"https://www.mancity.com/players/erling-haaland", dataSource:SOURCE_NOTE, animationUrl:"dsp-player-card-v2.html#card_soccer_haaland"},
+        history:[{at:"2026-05-20T00:00:00+08:00", type:"SEED", note:"Manchester City official profile anchored demo card created."}],
+        licenseNote:"Classroom concept card; no commercial use implied."
+      },
+      {
+        id:"card_basket_lebron", tokenId:"DSP-2026-BK-023", sport:"basketball", playerName:"LeBron James",
+        team:"Los Angeles Lakers", teamCode:"LAL", league:"NBA", position:"Forward", jerseyNumber:"23",
+        nationality:"United States", continent:"North America", rarity:"limited", price:2.15, owner:null,
+        serial:"BK-023/500", status:"Active", version:1, lastUpdate:"2026-05-20T00:00:00+08:00",
+        imageUrl:"https://cdn.nba.com/headshots/nba/latest/1040x760/2544.png",
+        logoUrl:"https://a.espncdn.com/i/teamlogos/nba/500/lal.png",
+        teamColors:["#552583","#fdb927"], badges:["23rd Season","All-Time Scorer","Playoff Mode"],
+        stats:{points:24.4, rebounds:7.8, assists:8.2, steals:1.0, blocks:.6, fgPct:51.3},
+        metadata:{sourceUrl:"https://www.nba.com/player/2544/lebron-james", dataSource:SOURCE_NOTE, animationUrl:"dsp-player-card-v2.html#card_basket_lebron"},
+        history:[{at:"2026-05-20T00:00:00+08:00", type:"SEED", note:"NBA official profile anchored demo card created."}],
+        licenseNote:"NBA imagery and marks are referenced for non-commercial prototype demonstration."
+      },
+      {
+        id:"card_basket_curry", tokenId:"DSP-2026-BK-030", sport:"basketball", playerName:"Stephen Curry",
+        team:"Golden State Warriors", teamCode:"GSW", league:"NBA", position:"Guard", jerseyNumber:"30",
+        nationality:"United States", continent:"North America", rarity:"legendary", price:1.72, owner:null,
+        serial:"BK-030/700", status:"Active", version:1, lastUpdate:"2026-05-20T00:00:00+08:00",
+        imageUrl:"https://cdn.nba.com/headshots/nba/latest/1040x760/201939.png",
+        logoUrl:"https://a.espncdn.com/i/teamlogos/nba/500/gs.png",
+        teamColors:["#1d428a","#ffc72c"], badges:["3PT King","Clutch Range","Bay Area"],
+        stats:{points:26.6, rebounds:4.1, assists:6.0, steals:1.1, blocks:.4, fgPct:45.2},
+        metadata:{sourceUrl:"https://www.nba.com/player/201939/stephen-curry", dataSource:SOURCE_NOTE, animationUrl:"dsp-player-card-v2.html#card_basket_curry"},
+        history:[{at:"2026-05-20T00:00:00+08:00", type:"SEED", note:"NBA official profile anchored demo card created."}],
+        licenseNote:"Demo card uses remote imagery and does not claim official partnership."
+      },
+      {
+        id:"card_basket_jokic", tokenId:"DSP-2026-BK-015", sport:"basketball", playerName:"Nikola Jokic",
+        team:"Denver Nuggets", teamCode:"DEN", league:"NBA", position:"Center", jerseyNumber:"15",
+        nationality:"Serbia", continent:"Europe", rarity:"legendary", price:1.82, owner:null,
+        serial:"BK-015/700", status:"Active", version:1, lastUpdate:"2026-05-20T00:00:00+08:00",
+        imageUrl:"https://cdn.nba.com/headshots/nba/latest/1040x760/203999.png",
+        logoUrl:"https://a.espncdn.com/i/teamlogos/nba/500/den.png",
+        teamColors:["#0e2240","#fec524"], badges:["Triple-Double Engine","MVP Finalist","Point Center"],
+        stats:{points:27.7, rebounds:12.9, assists:10.7, steals:1.1, blocks:.7, fgPct:56.9},
+        metadata:{sourceUrl:"https://www.nba.com/player/203999/nikola-jokic", dataSource:SOURCE_NOTE, animationUrl:"dsp-player-card-v2.html#card_basket_jokic"},
+        history:[{at:"2026-05-20T00:00:00+08:00", type:"SEED", note:"NBA official profile anchored demo card created."}],
+        licenseNote:"For classroom demonstration; stats are normalized demo snapshots."
+      },
+      {
+        id:"card_base_ohtani", tokenId:"DSP-2026-BB-017", sport:"baseball", playerName:"Shohei Ohtani",
+        team:"Los Angeles Dodgers", teamCode:"LAD", league:"MLB", position:"DH / RHP", jerseyNumber:"17",
+        nationality:"Japan", continent:"Asia", rarity:"limited", price:2.40, owner:null,
+        serial:"BB-017/500", status:"Active", version:1, lastUpdate:"2026-05-20T00:00:00+08:00",
+        imageUrl:"https://img.mlbstatic.com/mlb-photos/image/upload/v1/people/660271/headshot/67/current",
+        logoUrl:"https://a.espncdn.com/i/teamlogos/mlb/500/lad.png",
+        teamColors:["#005a9c","#ef3e42"], badges:["Two-Way Icon","NL MVP DNA","Tokyo Series"],
+        stats:{avg:.310, homeRuns:54, rbi:130, ops:1.036, stolenBases:59, strikeouts:0},
+        metadata:{sourceUrl:"https://www.mlb.com/player/shohei-ohtani-660271", dataSource:SOURCE_NOTE, animationUrl:"dsp-player-card-v2.html#card_base_ohtani"},
+        history:[{at:"2026-05-20T00:00:00+08:00", type:"SEED", note:"MLB official profile anchored demo card created."}],
+        licenseNote:"MLB player and club assets referenced only for non-commercial classroom prototype."
+      },
+      {
+        id:"card_base_judge", tokenId:"DSP-2026-BB-099", sport:"baseball", playerName:"Aaron Judge",
+        team:"New York Yankees", teamCode:"NYY", league:"MLB", position:"Right Field", jerseyNumber:"99",
+        nationality:"United States", continent:"North America", rarity:"legendary", price:1.78, owner:null,
+        serial:"BB-099/700", status:"Active", version:1, lastUpdate:"2026-05-20T00:00:00+08:00",
+        imageUrl:"https://img.mlbstatic.com/mlb-photos/image/upload/v1/people/592450/headshot/67/current",
+        logoUrl:"https://a.espncdn.com/i/teamlogos/mlb/500/nyy.png",
+        teamColors:["#132448","#c4ced4"], badges:["Captain","Power Record","All Rise"],
+        stats:{avg:.331, homeRuns:53, rbi:114, ops:1.145, stolenBases:12, strikeouts:0},
+        metadata:{sourceUrl:"https://www.mlb.com/player/aaron-judge-592450", dataSource:SOURCE_NOTE, animationUrl:"dsp-player-card-v2.html#card_base_judge"},
+        history:[{at:"2026-05-20T00:00:00+08:00", type:"SEED", note:"MLB official profile snapshot normalized for demo."}],
+        licenseNote:"Remote profile image and logo are used as prototype references."
+      },
+      {
+        id:"card_base_soto", tokenId:"DSP-2026-BB-022", sport:"baseball", playerName:"Juan Soto",
+        team:"New York Mets", teamCode:"NYM", league:"MLB", position:"Right Field", jerseyNumber:"22",
+        nationality:"Dominican Republic", continent:"North America", rarity:"epic", price:1.45, owner:null,
+        serial:"BB-022/900", status:"Active", version:1, lastUpdate:"2026-05-20T00:00:00+08:00",
+        imageUrl:"https://img.mlbstatic.com/mlb-photos/image/upload/v1/people/665742/headshot/67/current",
+        logoUrl:"https://a.espncdn.com/i/teamlogos/mlb/500/nym.png",
+        teamColors:["#002d72","#ff5910"], badges:["Plate Vision","Mets Era","Power Patience"],
+        stats:{avg:.288, homeRuns:41, rbi:109, ops:.989, stolenBases:7, strikeouts:0},
+        metadata:{sourceUrl:"https://www.mlb.com/player/juan-soto-665742", dataSource:SOURCE_NOTE, animationUrl:"dsp-player-card-v2.html#card_base_soto"},
+        history:[{at:"2026-05-20T00:00:00+08:00", type:"SEED", note:"MLB official profile anchored demo card created."}],
+        licenseNote:"Prototype reference card; not an official or commercial NFT."
+      }
+    ];
+
+    const StarterCards = buildStarterCards();
+
+    const Store = {
+      key:"dsp_player_cards_v3_exchange_state_20260520",
+      state:null,
+      defaults(){
+        return {
+          wallet:12.5,
+          activeView:"dashboard",
+          search:"",
+          filterSport:"all",
+          filterLeague:"all",
+          filterRarity:"all",
+          sortBy:"marketHeat",
+          visibleCount:24,
+          activeOracleId:null,
+          lastEffect:null,
+          lastOracleDiff:null,
+          lastTradeReceipt:null,
+          watchlist:[],
+          txLog:[],
+          cards:clone(StarterCards)
+        };
+      },
+      load(){
+        try{
+          const raw = localStorage.getItem(this.key);
+          if(!raw){
+            this.state = this.defaults();
+            return;
+          }
+          const parsed = JSON.parse(raw);
+          const defaults = this.defaults();
+          const mergedCards = mergeCardDefaults(Array.isArray(parsed.cards) ? parsed.cards : [], defaults.cards);
+          this.state = {
+            ...defaults,
+            ...parsed,
+            cards:mergedCards,
+            txLog:Array.isArray(parsed.txLog) ? parsed.txLog : defaults.txLog,
+            watchlist:Array.isArray(parsed.watchlist) ? parsed.watchlist : defaults.watchlist
+          };
+        }catch(error){
+          console.warn("State reset after parse failure", error);
+          this.state = this.defaults();
+        }
+      },
+      save(){
+        localStorage.setItem(this.key, JSON.stringify(this.state));
+      },
+      reset(){
+        localStorage.removeItem(this.key);
+        this.state = this.defaults();
+        this.save();
+      },
+      card(id){
+        return this.state.cards.find((card) => card.id === id);
+      },
+      ownedCards(){
+        return this.state.cards.filter((card) => card.owner === "demo_wallet");
+      },
+      leagues(){
+        return Array.from(new Set(this.state.cards.map((card) => card.league).filter(Boolean))).sort();
+      },
+      marketCards(){
+        const keyword = this.state.search.trim().toLowerCase();
+        const filtered = this.state.cards.filter((card) => {
+          const sportOK = this.state.filterSport === "all" || card.sport === this.state.filterSport;
+          const leagueOK = this.state.filterLeague === "all" || card.league === this.state.filterLeague;
+          const rarityOK = this.state.filterRarity === "all" || card.rarity === this.state.filterRarity;
+          const haystack = `${card.playerName} ${card.team} ${card.league} ${card.nationality} ${card.position} ${(card.skills || []).join(" ")}`.toLowerCase();
+          return sportOK && leagueOK && rarityOK && (!keyword || haystack.includes(keyword));
+        });
+        return sortCards(filtered, this.state.sortBy);
+      }
+    };
+
+    function mergeCardDefaults(saved, defaults){
+      const savedById = new Map(saved.map((card) => [card.id, card]));
+      const merged = defaults.map((base) => {
+        const existing = savedById.get(base.id);
+        const next = existing ? {...base, ...existing, stats:{...(base.stats || {}), ...(existing.stats || {})}, metadata:{...(base.metadata || {}), ...(existing.metadata || {})}} : base;
+        return enrichCard(next);
+      });
+      saved.forEach((card) => {
+        if(!merged.some((item) => item.id === card.id)) merged.push(enrichCard(card));
+      });
+      return merged;
+    }
+
+    function sortCards(cards, sortBy){
+      const list = cards.slice();
+      const key = sortBy || "marketHeat";
+      list.sort((a,b) => {
+        if(key === "priceAsc") return ValueModel.estimate(a) - ValueModel.estimate(b);
+        if(key === "priceDesc") return ValueModel.estimate(b) - ValueModel.estimate(a);
+        if(key === "ovr") return (b.abilityStats?.ovr || 0) - (a.abilityStats?.ovr || 0);
+        if(key === "recent") return new Date(b.lastUpdate) - new Date(a.lastUpdate);
+        if(key === "rarity") return rarityOrder.indexOf(b.rarity) - rarityOrder.indexOf(a.rarity);
+        return (b.marketData?.marketHeat || b.abilityStats?.marketHeat || 0) - (a.marketData?.marketHeat || a.abilityStats?.marketHeat || 0);
+      });
+      return list;
+    }
+
+    function topCards(type, limit = 10, sport = "all"){
+      const source = Store.state?.cards || StarterCards;
+      const filtered = sport === "all" ? source : source.filter((card) => card.sport === sport);
+      return filtered.slice().sort((a,b) => {
+        if(type === "value") return ValueModel.estimate(b) - ValueModel.estimate(a);
+        if(type === "social") return (b.marketData?.socialInfluence || 0) - (a.marketData?.socialInfluence || 0);
+        if(type === "recent") return new Date(b.lastUpdate) - new Date(a.lastUpdate);
+        if(type === "watchlist") return Number(Store.state?.watchlist?.includes(b.id) || 0) - Number(Store.state?.watchlist?.includes(a.id) || 0);
+        return (b.marketData?.marketHeat || b.abilityStats?.marketHeat || 0) - (a.marketData?.marketHeat || a.abilityStats?.marketHeat || 0);
+      }).slice(0, limit);
+    }
+
+    function undervaluedCards(limit = 10){
+      const source = Store.state?.cards || StarterCards;
+      return source.slice().sort((a,b) => undervaluedScore(b) - undervaluedScore(a)).slice(0, limit);
+    }
+
+    function undervaluedScore(card){
+      return (card.abilityStats?.ovr || 70) + (card.marketData?.marketHeat || 50) - ValueModel.estimate(card) * 8;
+    }
+
+    function achievementList(){
+      const owned = Store.ownedCards();
+      const bySport = (sport) => owned.filter((card) => card.sport === sport).length;
+      const hasRarity = (rarity) => owned.some((card) => card.rarity === rarity);
+      return [
+        {name:"Football Collector", desc:"收藏 3 張足球卡", done:bySport("soccer") >= 3},
+        {name:"Basketball Collector", desc:"收藏 3 張籃球卡", done:bySport("basketball") >= 3},
+        {name:"Baseball Collector", desc:"收藏 3 張棒球卡", done:bySport("baseball") >= 3},
+        {name:"MVP Hunter", desc:"收藏 MVP / Champion 徽章", done:owned.some((card) => (card.badges || []).includes("MVP / Champion"))},
+        {name:"Legendary Vault", desc:"擁有 Legendary 以上卡", done:owned.some((card) => rarityOrder.indexOf(card.rarity) >= rarityOrder.indexOf("legendary"))},
+        {name:"GOAT Collection", desc:"收藏 5 張 OVR 90+ 卡", done:owned.filter((card) => (card.abilityStats?.ovr || 0) >= 90).length >= 5},
+        {name:"Asia Icon Set", desc:"收藏亞洲球星卡", done:owned.some((card) => card.continent === "Asia")},
+        {name:"Rookie Scout", desc:"使用 Card Studio 建立自訂卡", done:owned.some((card) => card.id.startsWith("custom_card"))},
+        {name:"Market Trader", desc:"完成一筆二級市場交易", done:Store.state.txLog.some((tx) => tx.type === "SALE")},
+        {name:"Oracle Master", desc:"觸發 3 次 Oracle 更新", done:Store.state.txLog.filter((tx) => tx.type === "ORACLE").length >= 3},
+        {name:"One of One Hunter", desc:"收藏 One of One", done:hasRarity("oneOfOne")}
+      ];
+    }
+
+    const ValueModel = {
+      score(card){
+        const rarityWeight = Rarity[card.rarity]?.weight || 1;
+        const badgeBoost = (card.badges?.length || 0) * .06;
+        const versionBoost = Math.max(0, (card.version || 1) - 1) * .035;
+        const statBoost = Object.values(card.stats || {}).reduce((sum, value) => sum + Math.min(Number(value) || 0, 120) / 900, 0);
+        return 1 + rarityWeight * .08 + badgeBoost + versionBoost + statBoost;
+      },
+      breakdown(card){
+        const basePrice = Number(card.price || .1);
+        const rarityMultiplier = Rarity[card.rarity]?.multiplier || 1;
+        const ability = card.abilityStats || {};
+        const performanceScore = clamp(.82 + (ability.ovr || 75) / 125 + Object.values(card.stats || {}).reduce((sum, value) => sum + Math.min(Math.abs(Number(value) || 0), 150) / 3000, 0), .85, 1.95);
+        const socialInfluence = clamp((card.marketData?.socialInfluence || 58) / 70, .72, 1.5);
+        const marketHeat = clamp((card.marketData?.marketHeat || ability.marketHeat || 60) / 72, .72, 1.45);
+        const collectorDemand = clamp((card.marketData?.collectorDemand || 60) / 75, .74, 1.42);
+        const recentEventBoost = clamp(1 + Math.min((card.version || 1) - 1, 12) * .018 + (card.status !== "Active" ? .035 : 0), 1, 1.34);
+        const estimatedValue = clamp(basePrice * rarityMultiplier * performanceScore * socialInfluence * marketHeat * collectorDemand * recentEventBoost, .01, 999);
+        return {basePrice, rarityMultiplier, performanceScore, socialInfluence, marketHeat, collectorDemand, recentEventBoost, estimatedValue};
+      },
+      estimate(card){
+        return this.breakdown(card).estimatedValue;
+      }
+    };
+
+    const Metadata = {
+      forCard(card){
+        const sport = Sports[card.sport] || Sports.soccer;
+        const valuation = ValueModel.breakdown(card);
+        const attrs = [
+          ["basic","sport", sport.label],
+          ["basic","player_name", card.playerName],
+          ["basic","team", card.team],
+          ["basic","league", card.league],
+          ["basic","position", card.position],
+          ["basic","jersey_number", card.jerseyNumber],
+          ["basic","nationality", card.nationality],
+          ["rarity","rarity", Rarity[card.rarity]?.label || card.rarity],
+          ["rarity","rarity_drop_rate", Rarity[card.rarity]?.drop || "-"],
+          ["rarity","rarity_market", Rarity[card.rarity]?.market || "-"],
+          ["history","status", card.status],
+          ["history","version", `v${card.version}`],
+          ["market","estimated_value_eth", money(valuation.estimatedValue)]
+        ].map(([category, trait_type, value]) => ({category, trait_type, value}));
+        Object.entries(card.stats || {}).forEach(([key, value]) => attrs.push({category:"stats", trait_type:StatLabels[key] || key, value:formatStat(key, value)}));
+        Object.entries(card.abilityStats || {}).forEach(([key, value]) => attrs.push({category:"abilityStats", trait_type:key, value}));
+        (card.skills || []).forEach((skill) => attrs.push({category:"skills", trait_type:"skill", value:skill}));
+        (card.badges || []).forEach((badge) => attrs.push({category:"history", trait_type:"badge", value:badge}));
+        Object.entries(card.socialLinks || {}).filter(([, value]) => value).forEach(([key, value]) => attrs.push({category:"social", trait_type:key, value}));
+        return {
+          token_id:card.tokenId,
+          name:`${card.playerName} Dynamic Player Card`,
+          description:`A classroom Dynamic NFT prototype card for ${card.playerName}. Manual oracle events update stats, rarity, badges and card metadata.`,
+          image:card.imageUrl,
+          animation_url:card.metadata?.animationUrl || `dsp-player-card-v2.html#${card.id}`,
+          external_url:card.metadata?.sourceUrl || "",
+          tokenURI:card.metadata?.tokenURI || `ipfs://demo/dynamic-player-card/${card.tokenId}`,
+          sport:sport.label,
+          player_name:card.playerName,
+          team:card.team,
+          league:card.league,
+          owner:card.owner || "unminted",
+          nationality:card.nationality,
+          rarity:Rarity[card.rarity]?.label || card.rarity,
+          season:"2025-26 / demo snapshot",
+          attributes:attrs,
+          skills:card.skills || [],
+          abilityStats:card.abilityStats || {},
+          socialLinks:card.socialLinks || emptySocialLinks(),
+          marketData:card.marketData || {},
+          last_update:card.lastUpdate,
+          data_source:card.metadata?.dataSource || SOURCE_NOTE,
+          transaction_history:card.history || [],
+          metadata_versions:card.metadataVersions || [],
+          source_status:card.sourceStatus || "demo; pending official verification",
+          license_note:card.licenseNote
+        };
+      }
+    };
+
+    const EventSets = {
+      soccer:[
+        {id:"goal", icon:"G", title:"進球 +1", impact:"goals +1，解鎖進球光效", effect:"goal", apply(card){
+          inc(card,"goals",1); inc(card,"shots",3); addBadge(card,"Goal Spark"); promote(card,"rare");
+        }},
+        {id:"hat_trick", icon:"HT", title:"帽子戲法", impact:"單場三球，升級 Special Edition", effect:"award", apply(card){
+          inc(card,"goals",3); inc(card,"shots",7); addBadge(card,"Hat Trick"); promote(card,"epic"); card.status = "Special Edition";
+        }},
+        {id:"assist", icon:"A", title:"關鍵助攻", impact:"assists +1，提升傳球資料", effect:"goal", apply(card){
+          inc(card,"assists",1); inc(card,"passPct",.3); addBadge(card,"Key Assist");
+        }}
+      ],
+      basketball:[
+        {id:"thirty", icon:"30", title:"單場 30+ 得分", impact:"得分能力值上升，新增高光徽章", effect:"award", apply(card){
+          inc(card,"points",1.1); inc(card,"fgPct",.4); addBadge(card,"30+ Night"); promote(card,"rare");
+        }},
+        {id:"triple_double", icon:"TD", title:"大三元", impact:"三項數據達雙位數，升級金色光效", effect:"award", apply(card){
+          inc(card,"points",.8); inc(card,"rebounds",.7); inc(card,"assists",.8); addBadge(card,"Triple-Double"); promote(card,"epic"); card.status = "Special Edition";
+        }},
+        {id:"clutch", icon:"CL", title:"絕殺時刻", impact:"解鎖 Clutch 徽章與版本紀錄", effect:"goal", apply(card){
+          inc(card,"points",.5); addBadge(card,"Clutch Shot"); promote(card,"epic");
+        }}
+      ],
+      baseball:[
+        {id:"homer", icon:"HR", title:"全壘打", impact:"HR +1，火焰球軌與價值提升", effect:"homer", apply(card){
+          inc(card,"homeRuns",1); inc(card,"rbi",2); inc(card,"ops",.006); addBadge(card,"Home Run"); promote(card,"rare");
+        }},
+        {id:"no_hitter", icon:"NH", title:"無安打紀錄", impact:"投手紀錄版，稀有度升級", effect:"award", apply(card){
+          card.stats.era = Number(Math.max(0, Number(card.stats.era ?? 2.8) - .08).toFixed(2));
+          card.stats.whip = Number(Math.max(.4, Number(card.stats.whip ?? 1.05) - .03).toFixed(2));
+          inc(card,"strikeouts",8); addBadge(card,"No-Hitter Edition"); promote(card,"epic"); card.status = "Record Edition";
+        }},
+        {id:"walkoff", icon:"WO", title:"再見安打", impact:"解鎖 Walk-off 徽章", effect:"homer", apply(card){
+          inc(card,"rbi",1); inc(card,"ops",.004); addBadge(card,"Walk-off"); promote(card,"epic");
+        }}
+      ],
+      global:[
+        {id:"transfer", icon:"TR", title:"轉隊 / 版本更新", impact:"隊名改為 Special Edition，記錄 team 欄位變化", effect:"goal", apply(card){
+          card.previousTeam = card.previousTeam || card.team;
+          card.team = `${card.team} Special Edition`;
+          card.league = `${card.league} Update`;
+          card.status = "Team Updated";
+          addBadge(card,"Team Update");
+        }},
+        {id:"injury", icon:"IN", title:"受傷狀態", impact:"status 更新為 Injured，metadata 即時反映", effect:"injury", apply(card){
+          card.status = "Injured";
+          addBadge(card,"Injury Watch");
+        }},
+        {id:"award", icon:"MV", title:"MVP / 冠軍", impact:"解鎖獎項徽章，至少升級 Legendary", effect:"award", apply(card){
+          addBadge(card,"MVP / Champion"); promote(card,"legendary"); card.status = "Award Edition";
+        }}
+      ]
+    };
+
+    function formatStat(key, value){
+      const number = Number(value);
+      if(["avg","ops","whip"].includes(key)) return number.toFixed(3).replace(/^0/,"");
+      if(["passPct","fgPct"].includes(key)) return `${number.toFixed(1)}%`;
+      if(["points","rebounds","assists","steals","blocks","era"].includes(key)) return number.toFixed(1);
+      return Number.isFinite(number) ? String(Math.round(number)) : String(value ?? "-");
+    }
+
+    function inc(card, key, amount){
+      const current = Number(card.stats?.[key] ?? 0);
+      const next = current + amount;
+      const decimals = ["avg","ops","whip"].includes(key) ? 3 : ["points","rebounds","assists","steals","blocks","fgPct","passPct","era"].includes(key) ? 1 : 0;
+      card.stats[key] = Number(next.toFixed(decimals));
+    }
+
+    function addBadge(card, badge){
+      card.badges = Array.isArray(card.badges) ? card.badges : [];
+      if(!card.badges.includes(badge)) card.badges.unshift(badge);
+      card.badges = card.badges.slice(0, 8);
+    }
+
+    function promote(card, target){
+      const currentIndex = rarityOrder.indexOf(card.rarity);
+      const targetIndex = rarityOrder.indexOf(target);
+      if(targetIndex > currentIndex) card.rarity = target;
+    }
+
+    function snapshotCard(card){
+      return {
+        stats:clone(card.stats || {}),
+        abilityStats:clone(card.abilityStats || {}),
+        rarity:card.rarity,
+        value:ValueModel.estimate(card),
+        version:card.version
+      };
+    }
+
+    function applyOracleBoost(card, event){
+      card.abilityStats = card.abilityStats || abilityFor(card.sport, card.position, card.rarity, 25);
+      card.marketData = card.marketData || marketDataFor(card);
+      const boost = event.id === "injury" ? -3 : event.id === "transfer" ? 2 : event.id === "award" ? 6 : event.id === "triple_double" || event.id === "hat_trick" || event.id === "no_hitter" ? 5 : 3;
+      card.abilityStats.marketHeat = clamp((card.abilityStats.marketHeat || 60) + boost * 2, 1, 99);
+      card.abilityStats.clutch = clamp((card.abilityStats.clutch || 60) + (event.id === "injury" ? -2 : boost), 1, 99);
+      card.abilityStats.potential = clamp((card.abilityStats.potential || 60) + (boost > 3 ? 1 : 0), 1, 99);
+      card.abilityStats.ovr = clamp((card.abilityStats.ovr || 70) + (boost > 4 ? 1 : 0) + (event.id === "injury" ? -1 : 0), 1, 99);
+      card.marketData.marketHeat = card.abilityStats.marketHeat;
+      card.marketData.collectorDemand = clamp((card.marketData.collectorDemand || 60) + boost, 1, 99);
+      card.marketData.recentEventBoost = boost;
+      if(event.id === "award") promote(card,"legendary");
+      if(event.id === "no_hitter" || event.id === "hat_trick" || event.id === "triple_double") promote(card,"mythic");
+    }
+
+    function buildOracleDiff(card, event, before){
+      const after = snapshotCard(card);
+      const changes = [];
+      Object.keys({...before.stats, ...after.stats}).forEach((key) => {
+        if(String(before.stats[key]) !== String(after.stats[key])) changes.push({type:"stat", key, before:formatStat(key, before.stats[key] ?? 0), after:formatStat(key, after.stats[key] ?? 0)});
+      });
+      ["ovr","marketHeat","potential","clutch"].forEach((key) => {
+        if(before.abilityStats[key] !== after.abilityStats[key]) changes.push({type:"ability", key, before:before.abilityStats[key], after:after.abilityStats[key]});
+      });
+      if(before.rarity !== after.rarity) changes.push({type:"rarity", key:"rarity", before:Rarity[before.rarity]?.label || before.rarity, after:Rarity[after.rarity]?.label || after.rarity});
+      changes.push({type:"market", key:"estimatedValue", before:`${money(before.value)} ETH`, after:`${money(after.value)} ETH`});
+      return {
+        status:["Pending","Verifying","Confirmed","Metadata Updated"],
+        payload:{
+          eventType:event.id,
+          playerId:card.id,
+          playerName:card.playerName,
+          source:"Manual Oracle Demo",
+          verified:true,
+          timestamp:nowISO(),
+          changes,
+          metadataVersion:card.version + 1,
+          oracleStatus:"Metadata Updated",
+          txHash:`0xora${Date.now().toString(16)}`
+        },
+        changes
+      };
+    }
+
+    const Actions = {
+      mint(cardId){
+        const card = Store.card(cardId);
+        if(!card) return UI.toast("找不到卡片", "此卡片不存在。", "NO");
+        if(card.owner === "demo_wallet") return UI.toast("已在收藏庫", `${card.playerName} 已完成 Mint。`, "OK");
+        if(Store.state.wallet < card.price) return UI.toast("餘額不足", "Demo Wallet ETH 不足，無法購買。", "!");
+        Store.state.wallet = Number((Store.state.wallet - card.price).toFixed(4));
+        card.owner = "demo_wallet";
+        card.marketData = card.marketData || marketDataFor(card);
+        card.marketData.owner = "demo_wallet";
+        card.marketData.listed = false;
+        card.marketData.lastSale = Number(card.price);
+        card.marketData.volume = Number(((card.marketData.volume || 0) + Number(card.price)).toFixed(2));
+        card.marketData.priceHistory = card.marketData.priceHistory || [];
+        card.marketData.priceHistory.unshift({at:nowISO(), type:"Mint", price:Number(card.price), status:"Confirmed"});
+        card.version += 1;
+        card.lastUpdate = nowISO();
+        card.history = card.history || [];
+        const receipt = tradeReceipt("MINT", "issuer", "demo_wallet", card.price);
+        card.history.unshift({at:card.lastUpdate, type:"MINT", note:`Minted from primary market for ${money(card.price)} ETH.`, receipt});
+        Store.state.lastTradeReceipt = receipt;
+        Store.state.activeOracleId = Store.state.activeOracleId || card.id;
+        this.log("MINT", card, `一級市場 Mint：${card.playerName}`, -card.price);
+        Store.save();
+        UI.render();
+        UI.toast("購買成功", `${card.playerName} 已加入收藏庫。`, "OK");
+      },
+      burn(cardId){
+        const card = Store.card(cardId);
+        if(!card || card.owner !== "demo_wallet") return;
+        const refund = Number((ValueModel.estimate(card) * .52).toFixed(4));
+        Store.state.wallet = Number((Store.state.wallet + refund).toFixed(4));
+        card.owner = null;
+        card.marketData = card.marketData || marketDataFor(card);
+        card.marketData.owner = "issuer";
+        card.marketData.listed = false;
+        card.version += 1;
+        card.lastUpdate = nowISO();
+        card.history.unshift({at:card.lastUpdate, type:"DEMO_RETURN", note:`Demo return redeemed ${refund} ETH.`});
+        this.log("DEMO_RETURN", card, `Demo 回收：${card.playerName}`, refund);
+        if(Store.state.activeOracleId === card.id) Store.state.activeOracleId = Store.ownedCards()[0]?.id || null;
+        Store.save();
+        UI.render();
+        UI.toast("已回收", `${card.playerName} 已從收藏庫移回市場。`, "OK");
+      },
+      sendOracle(cardId){
+        const card = Store.card(cardId);
+        if(!card || card.owner !== "demo_wallet") return UI.toast("尚未收藏", "請先 Mint 卡片再送入預言機。", "!");
+        Store.state.activeOracleId = card.id;
+        Store.state.activeView = "oracle";
+        Store.save();
+        UI.render();
+      },
+      oracleEvent(eventId){
+        const card = Store.card(Store.state.activeOracleId);
+        if(!card || card.owner !== "demo_wallet") return UI.toast("未選擇卡片", "請先選擇收藏庫中的卡片。", "!");
+        const event = [...(EventSets[card.sport] || []), ...EventSets.global].find((item) => item.id === eventId);
+        if(!event) return;
+        const beforeSnapshot = snapshotCard(card);
+        const before = Metadata.forCard(card);
+        event.apply(card);
+        applyOracleBoost(card, event);
+        card.version += 1;
+        card.lastUpdate = nowISO();
+        card.history = card.history || [];
+        card.history.unshift({
+          at:card.lastUpdate,
+          type:`ORACLE_${event.id.toUpperCase()}`,
+          note:`${event.title} applied. Metadata v${card.version} generated from manual oracle input.`
+        });
+        Store.state.lastEffect = {cardId:card.id, effect:event.effect, at:Date.now()};
+        Store.state.lastOracleDiff = buildOracleDiff(card, event, beforeSnapshot);
+        card.metadataVersions = card.metadataVersions || [];
+        card.metadataVersions.unshift({version:card.version, at:card.lastUpdate, reason:event.title, diff:Store.state.lastOracleDiff.changes});
+        this.log("ORACLE", card, `${event.title} 更新：${before.rarity} -> ${Rarity[card.rarity]?.label || card.rarity}`, 0);
+        Store.save();
+        UI.render();
+        UI.toast("預言機已更新", `${card.playerName} v${card.version} metadata 已刷新。`, "OK");
+      },
+      buyNow(cardId){
+        return this.mint(cardId);
+      },
+      listForSale(cardId){
+        const card = Store.card(cardId);
+        if(!card || card.owner !== "demo_wallet") return UI.toast("尚未收藏", "只有收藏庫中的卡片可以掛單。", "!");
+        card.marketData = card.marketData || marketDataFor(card);
+        card.marketData.listed = true;
+        card.marketData.listingType = "secondary";
+        card.marketData.askingPrice = Number((ValueModel.estimate(card) * 1.06).toFixed(2));
+        card.history.unshift({at:nowISO(), type:"LIST_FOR_SALE", note:`Listed for ${money(card.marketData.askingPrice)} ETH.`});
+        this.log("LIST", card, `掛單出售：${card.playerName} ${money(card.marketData.askingPrice)} ETH`, 0);
+        Store.save();
+        UI.render();
+        UI.toast("已掛單", `${card.playerName} 已進入二級市場。`, "OK");
+      },
+      cancelListing(cardId){
+        const card = Store.card(cardId);
+        if(!card || card.owner !== "demo_wallet") return;
+        card.marketData = card.marketData || marketDataFor(card);
+        card.marketData.listed = false;
+        card.history.unshift({at:nowISO(), type:"CANCEL_LISTING", note:"Owner cancelled the secondary market listing."});
+        this.log("CANCEL_LISTING", card, `取消掛單：${card.playerName}`, 0);
+        Store.save();
+        UI.render();
+        UI.toast("已取消掛單", `${card.playerName} 回到收藏庫未出售狀態。`, "OK");
+      },
+      makeOffer(cardId){
+        const card = Store.card(cardId);
+        if(!card) return;
+        card.marketData = card.marketData || marketDataFor(card);
+        const price = Number((ValueModel.estimate(card) * (.86 + Math.random() * .1)).toFixed(2));
+        const offer = {id:uid("offer"), from:`collector_${Math.floor(1000 + Math.random() * 8999)}`, price, at:nowISO(), status:"Pending"};
+        card.marketData.offers = card.marketData.offers || [];
+        card.marketData.offers.unshift(offer);
+        card.history.unshift({at:offer.at, type:"MAKE_OFFER", note:`${offer.from} offered ${money(price)} ETH.`});
+        this.log("OFFER", card, `收到出價：${money(price)} ETH`, 0);
+        Store.save();
+        UI.render();
+        UI.toast("已產生出價", `${card.playerName} 收到 ${money(price)} ETH 模擬出價。`, "OK");
+      },
+      acceptOffer(cardId){
+        const card = Store.card(cardId);
+        if(!card || card.owner !== "demo_wallet") return UI.toast("無法接受", "只有持有者可以接受出價。", "!");
+        const offer = (card.marketData?.offers || []).find((item) => item.status === "Pending");
+        if(!offer) return UI.toast("沒有待接受出價", "請先用 Make Offer 產生模擬出價。", "!");
+        offer.status = "Accepted";
+        const gas = Number((card.marketData?.gasFee || .003).toFixed(4));
+        Store.state.wallet = Number((Store.state.wallet + offer.price - gas).toFixed(4));
+        const receipt = tradeReceipt("SECONDARY_SALE", "demo_wallet", offer.from, offer.price, gas);
+        card.owner = offer.from;
+        card.marketData.owner = offer.from;
+        card.marketData.listed = false;
+        card.marketData.lastSale = offer.price;
+        card.marketData.volume = Number(((card.marketData.volume || 0) + offer.price).toFixed(2));
+        card.marketData.priceHistory.unshift({at:nowISO(), type:"Sale", price:offer.price, status:"Confirmed"});
+        card.history.unshift({at:nowISO(), type:"ACCEPT_OFFER", note:`Accepted ${money(offer.price)} ETH offer from ${offer.from}.`, receipt});
+        Store.state.lastTradeReceipt = receipt;
+        this.log("SALE", card, `接受出價並完成二級市場成交：${money(offer.price)} ETH`, offer.price);
+        Store.save();
+        UI.render();
+        UI.toast("交易確認", `${card.playerName} 已完成模擬鏈上成交。`, "TX");
+      },
+      toggleWatch(cardId){
+        Store.state.watchlist = Store.state.watchlist || [];
+        if(Store.state.watchlist.includes(cardId)){
+          Store.state.watchlist = Store.state.watchlist.filter((id) => id !== cardId);
+        }else{
+          Store.state.watchlist.push(cardId);
+        }
+        const card = Store.card(cardId);
+        if(card){
+          card.marketData = card.marketData || marketDataFor(card);
+          card.marketData.watchlisted = Store.state.watchlist.includes(cardId);
+        }
+        Store.save();
+        UI.render();
+      },
+      loadMore(){
+        Store.state.visibleCount = Math.min(Store.state.visibleCount + 24, Store.marketCards().length);
+        Store.save();
+        UI.renderMarket();
+      },
+      log(type, card, note, delta){
+        Store.state.txLog.unshift({
+          id:uid("tx"),
+          at:nowISO(),
+          type,
+          tokenId:card?.tokenId || "-",
+          cardName:card?.playerName || "-",
+          note,
+          delta:Number(delta || 0)
+        });
+        Store.state.txLog = Store.state.txLog.slice(0, 80);
+      }
+    };
+
+    const UI = {
+      toastTimer:null,
+      init(){
+        Store.load();
+        if(!Store.state.activeOracleId){
+          Store.state.activeOracleId = Store.ownedCards()[0]?.id || null;
+        }
+        this.bind();
+        this.render();
+      },
+      bind(){
+        document.addEventListener("click", (event) => {
+          const viewTarget = event.target.closest("[data-view]");
+          if(viewTarget){
+            this.setView(viewTarget.dataset.view);
+            return;
+          }
+          const action = event.target.closest("[data-action]");
+          if(!action) return;
+          const id = action.dataset.cardId;
+          switch(action.dataset.action){
+            case "buy": Actions.mint(id); break;
+            case "buy-now": Actions.buyNow(id); break;
+            case "make-offer": Actions.makeOffer(id); break;
+            case "list-sale": Actions.listForSale(id); break;
+            case "cancel-listing": Actions.cancelListing(id); break;
+            case "accept-offer": Actions.acceptOffer(id); break;
+            case "watch": Actions.toggleWatch(id); break;
+            case "load-more": Actions.loadMore(); break;
+            case "burn": Actions.burn(id); break;
+            case "detail": this.openDetail(id); break;
+            case "oracle": Actions.sendOracle(id); break;
+            case "oracle-event": Actions.oracleEvent(action.dataset.eventId); break;
+            case "copy-json": this.copyMetadata(); break;
+            case "download-json": this.downloadMetadata(); break;
+            case "export-state": this.exportState(); break;
+            case "reset-demo": this.resetDemo(); break;
+            case "close-modal": this.closeModal(); break;
+            case "add-card": this.addCustomCard(action.dataset.target || "market"); break;
+          }
+        });
+        document.addEventListener("input", (event) => {
+          if(event.target.id === "marketSearch"){
+            Store.state.search = event.target.value;
+            Store.state.visibleCount = 24;
+            Store.save();
+            this.renderMarket();
+          }
+        });
+        document.addEventListener("change", (event) => {
+          if(event.target.id === "filterSport"){
+            Store.state.filterSport = event.target.value;
+            Store.state.visibleCount = 24;
+            Store.save();
+            this.renderMarket();
+          }
+          if(event.target.id === "filterLeague"){
+            Store.state.filterLeague = event.target.value;
+            Store.state.visibleCount = 24;
+            Store.save();
+            this.renderMarket();
+          }
+          if(event.target.id === "filterRarity"){
+            Store.state.filterRarity = event.target.value;
+            Store.state.visibleCount = 24;
+            Store.save();
+            this.renderMarket();
+          }
+          if(event.target.id === "sortBy"){
+            Store.state.sortBy = event.target.value;
+            Store.save();
+            this.renderMarket();
+          }
+          if(event.target.id === "oraclePicker"){
+            Store.state.activeOracleId = event.target.value;
+            Store.save();
+            this.render();
+          }
+          if(event.target.id === "studioSport"){
+            this.renderStudioStats(event.target.value);
+          }
+        });
+        $("#detailModal").addEventListener("click", (event) => {
+          if(event.target.id === "detailModal") this.closeModal();
+        });
+        document.addEventListener("keydown", (event) => {
+          if(event.key === "Escape") this.closeModal();
+        });
+      },
+      setView(view){
+        if(!Views.some((item) => item.id === view)) return;
+        Store.state.activeView = view;
+        Store.save();
+        this.render();
+      },
+      render(){
+        const view = Views.find((item) => item.id === Store.state.activeView) || Views[0];
+        $("#pageIcon").textContent = view.icon;
+        $("#pageTitle").textContent = view.title;
+        $("#pageSubtitle").textContent = view.subtitle;
+        $("#nav").innerHTML = Views.map((item) => `
+          <button class="nav-btn ${item.id === view.id ? "active" : ""}" data-view="${item.id}">
+            <span class="nav-ico">${item.icon}</span>
+            <span><strong>${item.nav}</strong><small>${item.sub}</small></span>
+          </button>
+        `).join("");
+        $$(".view").forEach((node) => node.classList.remove("active"));
+        $(`#view-${view.id}`)?.classList.add("active");
+        $("#walletBalance").textContent = money(Store.state.wallet);
+        $("#walletMeter").style.width = `${clamp(Store.state.wallet / 12.5 * 100, 7, 100)}%`;
+        $("#collectionBadge").textContent = `${Store.ownedCards().length} CARDS`;
+        this.renderTopActions();
+        if(view.id === "dashboard") this.renderDashboard();
+        if(view.id === "market") this.renderMarket();
+        if(view.id === "collection") this.renderCollection();
+        if(view.id === "oracle") this.renderOracle();
+        if(view.id === "datahub") this.renderDataHub();
+        if(view.id === "studio") this.renderStudio();
+      },
+      renderTopActions(){
+        const view = Store.state.activeView;
+        if(view === "market"){
+          $("#topActions").innerHTML = `
+            <input class="search" id="marketSearch" value="${escapeAttr(Store.state.search)}" placeholder="搜尋球員 / 球隊 / 國籍" />
+            <select class="select" id="filterSport" aria-label="運動篩選">
+              ${option("all","全部運動",Store.state.filterSport)}
+              ${Object.entries(Sports).map(([id, sport]) => option(id, sport.label, Store.state.filterSport)).join("")}
+            </select>
+            <select class="select" id="filterLeague" aria-label="聯盟篩選">
+              ${option("all","全部聯盟",Store.state.filterLeague)}
+              ${Store.leagues().map((league) => option(league, league, Store.state.filterLeague)).join("")}
+            </select>
+            <select class="select" id="filterRarity" aria-label="稀有度篩選">
+              ${option("all","全部稀有度",Store.state.filterRarity)}
+              ${Object.entries(Rarity).map(([id, rarity]) => option(id, rarity.label, Store.state.filterRarity)).join("")}
+            </select>
+            <select class="select" id="sortBy" aria-label="排序">
+              ${option("marketHeat","Market Heat",Store.state.sortBy)}
+              ${option("ovr","OVR",Store.state.sortBy)}
+              ${option("priceDesc","價格高到低",Store.state.sortBy)}
+              ${option("priceAsc","價格低到高",Store.state.sortBy)}
+              ${option("rarity","稀有度",Store.state.sortBy)}
+              ${option("recent","最近更新",Store.state.sortBy)}
+            </select>
+          `;
+          return;
+        }
+        if(view === "oracle"){
+          const owned = Store.ownedCards();
+          $("#topActions").innerHTML = owned.length ? `
+            <select class="select" id="oraclePicker" aria-label="選擇預言機卡片">
+              ${owned.map((card) => option(card.id, `${card.playerName} | v${card.version}`, Store.state.activeOracleId)).join("")}
+            </select>
+            <button class="btn" data-action="copy-json">複製 Metadata</button>
+            <button class="btn" data-action="download-json">下載 JSON</button>
+          ` : `<button class="btn primary" data-view="market">前往市場</button>`;
+          return;
+        }
+        if(view === "collection"){
+          $("#topActions").innerHTML = `
+            <button class="btn" data-action="export-state">匯出收藏資料</button>
+            <button class="btn primary" data-view="market">市場</button>
+          `;
+          return;
+        }
+        $("#topActions").innerHTML = `
+          <button class="btn primary" data-view="market">開始 Mint</button>
+          <button class="btn" data-view="oracle">預言機</button>
+        `;
+      },
+      renderDashboard(){
+        const owned = Store.ownedCards();
+        const totalValue = owned.reduce((sum, card) => sum + ValueModel.estimate(card), 0);
+        const latest = Store.state.cards.slice().sort((a,b) => new Date(b.lastUpdate) - new Date(a.lastUpdate))[0] || Store.state.cards[0];
+        const sportCounts = Object.keys(Sports).map((sport) => Store.state.cards.filter((card) => card.sport === sport).length);
+        $("#view-dashboard").innerHTML = `
+          <section class="hero-grid">
+            <article class="panel brief">
+              <div>
+                <span class="brief-kicker">Dynamic NFT Prototype</span>
+                <h2 class="mt-18">用真實運動資料概念，驅動會更新的球員收藏卡。</h2>
+                <p>這版 v2 把期末報告整理成可操作網站：球員卡可以 Mint、進收藏庫，再透過手動預言機事件更新數據、徽章、稀有度、版本與 NFT metadata。</p>
+              </div>
+              <div class="pipeline" aria-label="資料流程">
+                ${["資料來源","事件判斷","Metadata","動態卡面","版本紀錄"].map((title, index) => `
+                  <div class="pipe-step">
+                    <b>${index + 1}. ${title}</b>
+                    <span>${["官方球員頁與示範快照","進球、大三元、全壘打等事件","attributes 與 animation_url","照片、Logo、隊色與徽章","history 與 demo tx log"][index]}</span>
+                  </div>
+                `).join("")}
+              </div>
+            </article>
+            <div>${this.cardHTML(latest, "spotlight")}</div>
+          </section>
+
+          <section class="grid cols-4 mt-14">
+            <article class="stat-tile"><span>主卡數</span><strong>${Store.state.cards.length}</strong><p>足球、籃球、棒球各 3 張起步。</p></article>
+            <article class="stat-tile"><span>收藏數</span><strong>${owned.length}</strong><p>已 Mint 到 Demo Wallet 的卡片。</p></article>
+            <article class="stat-tile"><span>估值</span><strong>${money(totalValue)}</strong><p>依稀有度、徽章與版本估算。</p></article>
+            <article class="stat-tile"><span>運動分布</span><strong>${sportCounts.join("/")}</strong><p>足球 / 籃球 / 棒球。</p></article>
+          </section>
+
+          <section class="grid cols-3 mt-14">
+            ${this.rankingCard("Highest Value", topCards("value", 5))}
+            ${this.rankingCard("Market Heat", topCards("marketHeat", 5))}
+            <article class="panel panel-pad">
+              <h3>Collector Achievements</h3>
+              <div class="achievement-grid mt-14">
+                ${achievementList().map((item) => `<div class="achievement ${item.done ? "done" : ""}"><b>${escapeHTML(item.name)}</b><span>${escapeHTML(item.desc)}</span></div>`).join("")}
+              </div>
+            </article>
+          </section>
+
+          <section class="grid cols-2 mt-14 align-start">
+            <article class="panel panel-pad">
+              <h3>展示主線</h3>
+              <table class="mt-14">
+                <tr><th>階段</th><th>網站呈現</th></tr>
+                <tr><td>選擇球員</td><td>市場與搜尋篩選主卡</td></tr>
+                <tr><td>蒐集數據</td><td>卡面三項摘要與詳情 metadata</td></tr>
+                <tr><td>判斷事件</td><td>預言機事件按鈕</td></tr>
+                <tr><td>更新 metadata</td><td>JSON 即時重算與下載</td></tr>
+                <tr><td>保存紀錄</td><td>history 與 demo transaction log</td></tr>
+              </table>
+            </article>
+            <article class="panel panel-pad">
+              <h3>授權定位</h3>
+              <p>本網站是課堂展示原型。頁面用遠端球員照片與 Logo 做真實感參考，並保留載入失敗 fallback；若轉成公開商業產品，需要處理肖像權、商標權、資料授權與 NFT 法規。</p>
+              <div class="notice mt-14">Demo 不上鏈、不登入、不串即時 API、不承諾投資或收益。鏈上概念只用來說明 tokenURI、metadata 與版本紀錄。</div>
+            </article>
+          </section>
+        `;
+      },
+      renderMarket(){
+        const cards = Store.marketCards();
+        const visible = cards.slice(0, Store.state.visibleCount || 24);
+        const listed = Store.state.cards.filter((card) => card.marketData?.listed);
+        const floor = cards.length ? Math.min(...cards.map((card) => ValueModel.estimate(card))) : 0;
+        const volume = Store.state.cards.reduce((sum, card) => sum + Number(card.marketData?.volume || 0), 0);
+        $("#view-market").innerHTML = `
+          <div class="section-head">
+            <div>
+              <h3>Dynamic Player Card Exchange</h3>
+              <p>找到 ${cards.length} 張卡片，顯示 ${visible.length} 張。支援一級 Mint、二級掛單、出價、Floor Price、Market Heat 與 Load More。</p>
+            </div>
+            <div class="section-actions">
+              <button class="btn" data-view="studio">新增自訂卡</button>
+            </div>
+          </div>
+          <section class="exchange-strip">
+            <article><span>Floor Price</span><b>${money(floor)} ETH</b><small>目前篩選卡池最低估值</small></article>
+            <article><span>Volume</span><b>${money(volume)} ETH</b><small>Demo 累計交易量</small></article>
+            <article><span>Secondary Listings</span><b>${listed.length}</b><small>收藏者掛單出售</small></article>
+            <article><span>Watchlist</span><b>${Store.state.watchlist?.length || 0}</b><small>觀察清單</small></article>
+          </section>
+          <section class="grid cols-3 mt-14">
+            ${this.rankingCard("Trending Cards", topCards("marketHeat", 5))}
+            ${this.rankingCard("Undervalued Cards", undervaluedCards(5))}
+            ${this.receiptCard(Store.state.lastTradeReceipt)}
+          </section>
+          ${cards.length ? `<div class="card-grid mt-14">${visible.map((card) => this.cardHTML(card, "market")).join("")}</div>
+            ${visible.length < cards.length ? `<div class="load-row"><button class="btn primary" data-action="load-more">Load More (${cards.length - visible.length})</button></div>` : ""}` : `
+            <div class="empty"><div><strong>沒有符合篩選的卡片</strong><span>調整搜尋或篩選條件。</span></div></div>
+          `}
+        `;
+      },
+      rankingCard(title, cards){
+        return `
+          <article class="panel panel-pad mini-rank">
+            <h3>${escapeHTML(title)}</h3>
+            <div class="rank-list mt-14">
+              ${cards.map((card, index) => `
+                <button class="rank-row" data-action="detail" data-card-id="${card.id}">
+                  <b>${index + 1}</b>
+                  <span>${escapeHTML(card.playerName)}<small>${escapeHTML(card.team)} | OVR ${card.abilityStats?.ovr || "-"}</small></span>
+                  <strong>${money(ValueModel.estimate(card))}</strong>
+                </button>
+              `).join("") || `<div class="log-line">暫無資料</div>`}
+            </div>
+          </article>
+        `;
+      },
+      receiptCard(receipt){
+        if(!receipt){
+          return `
+            <article class="panel panel-pad mini-rank">
+              <h3>Latest Chain Confirmation</h3>
+              <p>完成 Mint、掛單或二級市場交易後，這裡會顯示模擬鏈上確認結果。</p>
+            </article>
+          `;
+        }
+        return `
+          <article class="panel panel-pad mini-rank">
+            <h3>Latest Chain Confirmation</h3>
+            <div class="kv-grid mt-14">
+              ${[
+                ["Tx Hash", receipt.txHash],
+                ["Block", receipt.blockNumber],
+                ["From", receipt.from],
+                ["To", receipt.to],
+                ["Price", `${money(receipt.price)} ETH`],
+                ["Status", receipt.status]
+              ].map(([k,v]) => `<div class="kv"><span>${escapeHTML(k)}</span><b>${escapeHTML(v)}</b></div>`).join("")}
+            </div>
+          </article>
+        `;
+      },
+      oracleFlowPanel(card){
+        const diff = Store.state.lastOracleDiff;
+        return `
+          <article class="panel panel-pad">
+            <h3>Oracle Verification Flow</h3>
+            <div class="chain-flow mt-14">
+              ${(diff?.status || ["Pending","Verifying","Confirmed","Metadata Updated"]).map((step, index) => `<div class="flow-step ${diff ? "active" : ""}"><b>${index + 1}</b><span>${escapeHTML(step)}</span></div>`).join("")}
+            </div>
+            ${diff ? `
+              <div class="grid cols-2 mt-14 align-start">
+                <div class="diff-table">
+                  ${diff.changes.map((item) => `<div><span>${escapeHTML(item.key)}</span><b>${escapeHTML(item.before)} → ${escapeHTML(item.after)}</b></div>`).join("")}
+                </div>
+                <pre class="json-box compact">${escapeHTML(JSON.stringify(diff.payload, null, 2))}</pre>
+              </div>
+            ` : `<p>觸發事件後會顯示 Pending → Verifying → Confirmed → Metadata Updated，以及更新前後比較表與 Oracle JSON payload。</p>`}
+          </article>
+        `;
+      },
+      renderCollection(){
+        const cards = Store.ownedCards();
+        const totalValue = cards.reduce((sum, card) => sum + ValueModel.estimate(card), 0);
+        $("#view-collection").innerHTML = `
+          <div class="section-head">
+            <div>
+              <h3>Demo Wallet Collection</h3>
+              <p>已收藏 ${cards.length} 張，估值 ${money(totalValue)} ETH。收藏卡可送入預言機更新 metadata，也可做 Demo 回收。</p>
+            </div>
+            <div class="section-actions">
+              <button class="btn" data-action="export-state">匯出狀態</button>
+            </div>
+          </div>
+          ${cards.length ? `<div class="card-grid">${cards.map((card) => this.cardHTML(card, "collection")).join("")}</div>` : `
+            <div class="empty"><div><strong>收藏庫目前是空的</strong><span>先到市場 Mint 一張球員卡。</span><div class="mt-14"><button class="btn primary" data-view="market">前往市場</button></div></div></div>
+          `}
+        `;
+      },
+      renderOracle(){
+        const owned = Store.ownedCards();
+        const selected = Store.card(Store.state.activeOracleId) || owned[0];
+        if(selected && selected.id !== Store.state.activeOracleId){
+          Store.state.activeOracleId = selected.id;
+          Store.save();
+        }
+        if(!selected){
+          $("#view-oracle").innerHTML = `
+            <div class="empty"><div><strong>尚無可更新的收藏卡</strong><span>先從市場 Mint 一張卡，再回到預言機事件台。</span><div class="mt-14"><button class="btn primary" data-view="market">前往市場</button></div></div></div>
+          `;
+          return;
+        }
+        const events = [...(EventSets[selected.sport] || []), ...EventSets.global];
+        $("#view-oracle").innerHTML = `
+          <section class="oracle-layout">
+            <div>${this.cardHTML(selected, "oracle")}</div>
+            <div class="grid">
+              <article class="panel panel-pad">
+                <h3>Manual Oracle Events</h3>
+                <p>選擇事件後，卡片資料會立即重算並寫入版本紀錄。這裡模擬 Chainlink / sports API 將外部比賽資料傳入 metadata 更新流程。</p>
+                <div class="event-grid mt-14">
+                  ${events.map((event) => `
+                    <button class="btn event-btn" data-action="oracle-event" data-event-id="${event.id}">
+                      <span class="event-icon">${event.icon}</span>
+                      <span><strong>${event.title}</strong><span>${event.impact}</span></span>
+                    </button>
+                  `).join("")}
+                </div>
+              </article>
+              ${this.oracleFlowPanel(selected)}
+              <article class="panel panel-pad">
+                <div class="section-head">
+                  <div><h3>Metadata Preview</h3><p>${selected.tokenId} | ${selected.playerName} | v${selected.version}</p></div>
+                  <div class="section-actions">
+                    <button class="btn" data-action="copy-json">複製</button>
+                    <button class="btn" data-action="download-json">下載</button>
+                  </div>
+                </div>
+                <pre class="json-box" id="metadataBox">${escapeHTML(JSON.stringify(Metadata.forCard(selected), null, 2))}</pre>
+              </article>
+              <section class="grid cols-2 align-start">
+                <article class="panel panel-pad">
+                  <h3>Card History</h3>
+                  <div class="timeline mt-14">
+                    ${(selected.history || []).slice(0, 10).map((item) => this.logHTML(item)).join("") || `<div class="log-line">尚無紀錄</div>`}
+                  </div>
+                </article>
+                <article class="panel panel-pad">
+                  <h3>Demo Tx Log</h3>
+                  <div class="timeline mt-14">
+                    ${Store.state.txLog.slice(0, 10).map((item) => this.logHTML(item)).join("") || `<div class="log-line">尚無交易紀錄</div>`}
+                  </div>
+                </article>
+              </section>
+            </div>
+          </section>
+        `;
+      },
+      renderDataHub(){
+        $("#view-datahub").innerHTML = `
+          <div class="section-head">
+            <div>
+              <h3>資料架構與期末報告規格</h3>
+              <p>根據 PDF 整理成網站可展示的資料規格：選題理由、卡片欄位、動態更新邏輯、metadata 與授權風險。</p>
+            </div>
+          </div>
+          <section class="grid cols-2 align-start">
+            <article class="panel panel-pad">
+              <h3>為什麼選三大運動</h3>
+              <table class="mt-14">
+                <tr><th>運動</th><th>定位</th><th>Demo 用途</th></tr>
+                <tr><td>足球</td><td>全球覆蓋最廣，球星辨識度高</td><td>進球、帽子戲法、轉隊版本</td></tr>
+                <tr><td>籃球</td><td>年輕數位市場與個人數據直觀</td><td>30+ 得分、大三元、絕殺</td></tr>
+                <tr><td>棒球</td><td>高數據密度與成熟收藏卡文化</td><td>全壘打、無安打、再見安打</td></tr>
+              </table>
+            </article>
+            <article class="panel panel-pad">
+              <h3>卡片欄位</h3>
+              <table class="mt-14">
+                <tr><th>資料表</th><th>欄位</th></tr>
+                <tr><td>球員基本資料</td><td>playerName、nationality、team、league、position、jerseyNumber</td></tr>
+                <tr><td>表現數據</td><td>足球 goals / assists，籃球 points / rebounds / assists，棒球 AVG / HR / RBI / OPS</td></tr>
+                <tr><td>卡片資料</td><td>tokenId、rarity、price、owner、version、lastUpdate、badges、history</td></tr>
+                <tr><td>素材資料</td><td>imageUrl、logoUrl、teamColors、licenseNote、sourceUrl</td></tr>
+              </table>
+            </article>
+            <article class="panel panel-pad">
+              <h3>動態更新邏輯</h3>
+              <table class="mt-14">
+                <tr><th>事件</th><th>資料變化</th><th>卡面變化</th></tr>
+                <tr><td>進球 / 全壘打</td><td>核心數據加總，版本 +1</td><td>事件光效、徽章、估值提升</td></tr>
+                <tr><td>大三元 / 帽子戲法</td><td>多欄位同步更新</td><td>升級 Epic 或 Special Edition</td></tr>
+                <tr><td>轉隊 / 受傷</td><td>team 或 status 欄位更新</td><td>metadata 反映狀態變化</td></tr>
+                <tr><td>MVP / 冠軍</td><td>新增 award badge</td><td>至少升級 Legendary</td></tr>
+              </table>
+            </article>
+            <article class="panel panel-pad">
+              <h3>NFT 與鏈上鏈下分工</h3>
+              <table class="mt-14">
+                <tr><th>層級</th><th>負責內容</th></tr>
+                <tr><td>鏈上</td><td>ERC-721 token、owner、tokenURI、轉移紀錄</td></tr>
+                <tr><td>鏈下</td><td>比賽資料、圖片、metadata JSON、授權資訊</td></tr>
+                <tr><td>Oracle</td><td>把外部運動事件送進更新邏輯</td></tr>
+                <tr><td>前端</td><td>卡面動畫、資料面板、版本歷史、metadata 預覽</td></tr>
+              </table>
+            </article>
+          </section>
+          <section class="panel panel-pad mt-14">
+            <h3>授權與風險聲明</h3>
+            <p>本原型僅作為課堂展示用途。若未來商業化，球員肖像、球隊 Logo、聯盟商標、社群帳號資料與比賽數據皆需取得正式授權。正式版本可採用授權照片、自製插畫、生成式虛構角色，或經球員、球隊、聯盟同意的官方素材。</p>
+          </section>
+          <section class="panel panel-pad mt-14">
+            <h3>Chain Flow：鏈上 / 鏈下 / Oracle 架構</h3>
+            <div class="chain-flow long mt-14">
+              ${["比賽事件","Sports API / Manual Oracle","Oracle 驗證","更新 stats","更新 abilityStats","產生 metadata JSON","tokenURI 指向新版 metadata","前端卡面動態更新","收藏者看到升級","history / txLog 紀錄"].map((step, index) => `<div class="flow-step active"><b>${index + 1}</b><span>${escapeHTML(step)}</span></div>`).join("")}
+            </div>
+            <p>這個流程對應 Dynamic NFT、Oracle、metadata、tokenURI、鏈上所有權、鏈下資料、智能合約概念、數位收藏品與交易紀錄。</p>
+          </section>
+        `;
+      },
+      renderStudio(){
+        $("#view-studio").innerHTML = `
+          <section class="grid cols-2 align-start">
+            <article class="panel panel-pad">
+              <h3>建立自訂示範卡</h3>
+              <p>可補充組員想展示的球員或概念卡。若圖片或 Logo URL 空白，卡面會自動使用隊色與姓名縮寫。</p>
+              <div class="form-grid mt-14">
+                ${field("studioName","球員姓名","SAMURAI ACE")}
+                <div class="form-field"><label for="studioSport">運動</label><select class="field" id="studioSport">${Object.entries(Sports).map(([id, sport]) => `<option value="${id}">${sport.label}</option>`).join("")}</select></div>
+                ${field("studioTeam","球隊","Taipei Meteors")}
+                ${field("studioLeague","聯盟","Concept League")}
+                ${field("studioNationality","國籍","Taiwan")}
+                ${field("studioPosition","位置","Forward")}
+                ${field("studioJersey","背號","8")}
+                <div class="form-field"><label for="studioRarity">稀有度</label><select class="field" id="studioRarity">${Object.entries(Rarity).map(([id, rarity]) => `<option value="${id}" ${id === "rare" ? "selected" : ""}>${rarity.label}</option>`).join("")}</select></div>
+                ${field("studioPrice","價格 ETH","0.38","number","0.01","0.01")}
+                ${field("studioImage","照片 URL","")}
+                ${field("studioLogo","Logo URL","")}
+              </div>
+              <h4 class="mt-18">初始數據</h4>
+              <div class="form-grid mt-14" id="studioStats"></div>
+              <div class="section-actions mt-18">
+                <button class="btn primary" data-action="add-card" data-target="market">加入市場</button>
+                <button class="btn teal" data-action="add-card" data-target="collection">直接 Mint</button>
+              </div>
+            </article>
+            <article class="panel panel-pad">
+              <h3>資料欄位提示</h3>
+              <table class="mt-14">
+                <tr><th>欄位</th><th>用途</th></tr>
+                <tr><td>照片 URL / Logo URL</td><td>支援遠端圖源；載入失敗時會顯示 fallback</td></tr>
+                <tr><td>稀有度</td><td>影響邊框色、估值模型與 metadata attributes</td></tr>
+                <tr><td>初始數據</td><td>依運動切換欄位，預言機事件會延續這些欄位更新</td></tr>
+                <tr><td>加入收藏庫</td><td>建立後立即 owner = demo_wallet，適合直接測試 Oracle</td></tr>
+              </table>
+              <div class="notice mt-14">自訂卡預設使用自製概念資料，較適合避開肖像權與商標風險。</div>
+            </article>
+          </section>
+        `;
+        this.renderStudioStats("soccer");
+      },
+      renderStudioStats(sportId){
+        const sport = Sports[sportId] || Sports.soccer;
+        const statsBox = $("#studioStats");
+        if(!statsBox) return;
+        statsBox.innerHTML = sport.stats.slice(0, 6).map((key) => {
+          const value = sport.defaultStats[key] ?? 0;
+          return field(`stat_${key}`, StatLabels[key] || key, value, "number", key === "avg" || key === "ops" ? "0.001" : "0.1", "");
+        }).join("");
+      },
+      cardHTML(card, context = "market"){
+        const sport = Sports[card.sport] || Sports.soccer;
+        const rarity = Rarity[card.rarity] || Rarity.common;
+        const owned = card.owner === "demo_wallet";
+        const effect = Store.state.lastEffect?.cardId === card.id && Date.now() - Store.state.lastEffect.at < 1800 ? `effect-${Store.state.lastEffect.effect}` : "";
+        const visibleStats = sport.stats.filter((key) => key in (card.stats || {})).slice(0, 3);
+        const statusClass = card.status === "Injured" ? "warning" : /Edition|Updated/.test(card.status || "") ? "special" : "";
+        const teamA = card.teamColors?.[0] || sport.tone;
+        const teamB = card.teamColors?.[1] || rarity.color;
+        const watched = Store.state.watchlist?.includes(card.id);
+        const actions = context === "collection" ? `
+          <button class="btn teal" data-action="oracle" data-card-id="${card.id}">送入預言機</button>
+          <button class="btn" data-action="detail" data-card-id="${card.id}">詳情</button>
+          <button class="btn" data-action="${card.marketData?.listed ? "cancel-listing" : "list-sale"}" data-card-id="${card.id}">${card.marketData?.listed ? "取消掛單" : "掛單"}</button>
+        ` : context === "oracle" ? `
+          <button class="btn" data-action="detail" data-card-id="${card.id}">完整資料</button>
+          <a class="btn" href="${escapeAttr(card.metadata?.sourceUrl || "#")}" target="_blank" rel="noreferrer">來源頁</a>
+        ` : `
+          <button class="btn primary" data-action="${owned ? "detail" : "buy-now"}" data-card-id="${card.id}">${owned ? "已擁有" : (card.marketData?.listed ? "Buy Now" : "Mint")}</button>
+          <button class="btn" data-action="make-offer" data-card-id="${card.id}">出價</button>
+          <button class="btn" data-action="detail" data-card-id="${card.id}">詳情</button>
+        `;
+        const imageClass = card.imageUrl ? "media-frame" : "media-frame is-fallback";
+        return `
+          <article class="player-card ${effect}" data-card-id="${card.id}" style="--team-a:${teamA};--team-b:${teamB};--rarity-color:${rarity.color}">
+            <div class="card-topline">
+              <span class="serial">${escapeHTML(card.tokenId)} | ${escapeHTML(card.serial)}</span>
+              <span class="rarity-pill">${escapeHTML(rarity.label)}</span>
+            </div>
+            <div class="${imageClass}">
+              ${card.imageUrl ? `<img class="player-img" alt="${escapeAttr(card.playerName)}" src="${escapeAttr(card.imageUrl)}" loading="lazy" onerror="this.closest('.media-frame').classList.add('is-fallback');this.remove();" />` : ""}
+              <div class="fallback-initials">${escapeHTML(initials(card.playerName))}</div>
+              <div class="media-label">
+                <span class="source-pill">${escapeHTML(sport.label)}</span>
+                <span class="status-pill ${statusClass}">${escapeHTML(card.status || "Active")}</span>
+              </div>
+              <div class="team-logo ${card.logoUrl ? "" : "logo-failed"}" data-code="${escapeAttr(card.teamCode || sport.short)}">
+                ${card.logoUrl ? `<img alt="${escapeAttr(card.team)} logo" src="${escapeAttr(card.logoUrl)}" loading="lazy" onerror="this.closest('.team-logo').classList.add('logo-failed');this.remove();" />` : ""}
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="name-row">
+                <div>
+                  <h4 class="player-name">${escapeHTML(card.playerName)}</h4>
+                  <div class="team-line">${escapeHTML(card.team)} | ${escapeHTML(card.league)} | ${escapeHTML(card.position)}</div>
+                </div>
+                <div class="number-chip">#${escapeHTML(card.jerseyNumber)}</div>
+              </div>
+              <div class="ability-head">
+                <div class="ovr"><span>OVR</span><b>${card.abilityStats?.ovr || "-"}</b></div>
+                <div class="ability-mini">
+                  ${["attack","speed","skill"].map((key) => `<span>${key.toUpperCase()} <b>${card.abilityStats?.[key] || "-"}</b></span>`).join("")}
+                </div>
+                <button class="icon-btn watch-btn ${watched ? "active" : ""}" data-action="watch" data-card-id="${card.id}" title="Watchlist">${watched ? "★" : "☆"}</button>
+              </div>
+              <div class="badge-row">
+                ${(card.badges || []).slice(0, 4).map((badge) => `<span class="badge">${escapeHTML(badge)}</span>`).join("") || `<span class="badge">BASE CARD</span>`}
+              </div>
+              <div class="skill-row">
+                ${(card.skills || []).slice(0, 4).map((skill) => `<span>${escapeHTML(skill)}</span>`).join("")}
+              </div>
+              <div class="stats">
+                ${visibleStats.map((key) => `
+                  <div class="stat-box"><span>${escapeHTML(StatLabels[key] || key)}</span><b>${escapeHTML(formatStat(key, card.stats[key]))}</b></div>
+                `).join("")}
+              </div>
+              <div class="value-row"><span>v${card.version} | ${owned ? "demo_wallet" : (card.marketData?.listed ? "secondary" : "primary")}</span><b>${money(ValueModel.estimate(card))} ETH</b></div>
+              <div class="card-actions three">${actions}</div>
+            </div>
+          </article>
+        `;
+      },
+      logHTML(item){
+        return `
+          <div class="log-line">
+            <b>${escapeHTML(item.type || "LOG")} | ${escapeHTML(formatDate(item.at))}</b>
+            ${escapeHTML(item.note || item.cardName || "")}
+          </div>
+        `;
+      },
+      openDetail(cardId){
+        const card = Store.card(cardId);
+        if(!card) return;
+        $("#modalTitle").textContent = `${card.playerName} | ${card.tokenId}`;
+        const meta = Metadata.forCard(card);
+        const valuation = ValueModel.breakdown(card);
+        $("#modalBody").innerHTML = `
+          <div class="detail-grid">
+            <div>${this.cardHTML(card, card.owner === "demo_wallet" ? "collection" : "market")}</div>
+            <div class="grid">
+              <article class="panel panel-pad">
+                <h3>Card Data</h3>
+                <div class="kv-grid mt-14">
+                  ${[
+                    ["sport", Sports[card.sport]?.label],
+                    ["team", card.team],
+                    ["league", card.league],
+                    ["nationality", card.nationality],
+                    ["rarity", Rarity[card.rarity]?.label],
+                    ["status", card.status],
+                    ["owner", card.owner || "unminted"],
+                    ["last_update", formatDate(card.lastUpdate)]
+                  ].map(([key, value]) => `<div class="kv"><span>${key}</span><b>${escapeHTML(value)}</b></div>`).join("")}
+                </div>
+              </article>
+              <article class="panel panel-pad">
+                <h3>Career Story</h3>
+                <p class="story-text">${escapeHTML(card.biography || card.careerSummary || "")}</p>
+                <div class="grid cols-2 mt-14">
+                  <div>${listBlock("Career Highlights", card.careerHighlights)}</div>
+                  <div>${listBlock("Major Awards", card.majorAwards)}</div>
+                  <div>${listBlock("Records", card.records)}</div>
+                  <div>${listBlock("Skills", card.skills)}</div>
+                </div>
+              </article>
+              <article class="panel panel-pad">
+                <h3>Ability System</h3>
+                <div class="ability-bars mt-14">
+                  ${Object.entries(card.abilityStats || {}).map(([key, value]) => `<div class="bar-row"><span>${escapeHTML(key)}</span><b>${escapeHTML(value)}</b><i style="width:${clamp(Number(value), 0, 100)}%"></i></div>`).join("")}
+                </div>
+              </article>
+              <article class="panel panel-pad">
+                <h3>Collector Value Analysis</h3>
+                <p>${escapeHTML(card.collectorValue)}</p>
+                <div class="valuation-grid mt-14">
+                  ${[
+                    ["Base Price", money(valuation.basePrice)],
+                    ["Rarity Multiplier", `${valuation.rarityMultiplier.toFixed(2)}x`],
+                    ["Performance Score", valuation.performanceScore.toFixed(2)],
+                    ["Social Influence", valuation.socialInfluence.toFixed(2)],
+                    ["Market Heat", valuation.marketHeat.toFixed(2)],
+                    ["Collector Demand", valuation.collectorDemand.toFixed(2)],
+                    ["Recent Event Boost", valuation.recentEventBoost.toFixed(2)],
+                    ["Estimated Value", `${money(valuation.estimatedValue)} ETH`]
+                  ].map(([k,v]) => `<div><span>${escapeHTML(k)}</span><b>${escapeHTML(v)}</b></div>`).join("")}
+                </div>
+              </article>
+              <article class="panel panel-pad">
+                <h3>Social & Official Sources</h3>
+                <div class="social-grid mt-14">
+                  ${socialLinksHTML(card)}
+                </div>
+                <div class="source-list mt-14">
+                  ${(card.officialSources || []).map((source) => `<div><b>${escapeHTML(source.label)}</b><span>${escapeHTML(source.status)}</span>${source.url ? `<a href="${escapeAttr(source.url)}" target="_blank" rel="noreferrer">${escapeHTML(source.url)}</a>` : ""}</div>`).join("")}
+                </div>
+              </article>
+              <article class="panel panel-pad">
+                <h3>Market Data & Offers</h3>
+                <div class="kv-grid mt-14">
+                  ${[
+                    ["Floor Price", `${money(card.marketData?.floorPrice || 0)} ETH`],
+                    ["Last Sale", `${money(card.marketData?.lastSale || 0)} ETH`],
+                    ["Volume", `${money(card.marketData?.volume || 0)} ETH`],
+                    ["Owner", card.owner || card.marketData?.owner || "issuer"],
+                    ["Creator Royalty", `${card.marketData?.creatorRoyalty || 5}%`],
+                    ["Gas Fee", `${money(card.marketData?.gasFee || 0)} ETH`]
+                  ].map(([key, value]) => `<div class="kv"><span>${key}</span><b>${escapeHTML(value)}</b></div>`).join("")}
+                </div>
+                <div class="timeline mt-14">
+                  ${(card.marketData?.offers || []).slice(0, 5).map((offer) => `<div class="log-line"><b>${escapeHTML(offer.from)} | ${money(offer.price)} ETH</b>${escapeHTML(offer.status)} | ${escapeHTML(formatDate(offer.at))}</div>`).join("") || `<div class="log-line">No active offer yet.</div>`}
+                </div>
+                <div class="section-actions mt-14">
+                  <button class="btn" data-action="make-offer" data-card-id="${card.id}">Make Offer</button>
+                  <button class="btn teal" data-action="accept-offer" data-card-id="${card.id}">Accept Offer</button>
+                  <button class="btn" data-action="${card.marketData?.listed ? "cancel-listing" : "list-sale"}" data-card-id="${card.id}">${card.marketData?.listed ? "Cancel Listing" : "List for Sale"}</button>
+                </div>
+              </article>
+              <article class="panel panel-pad">
+                <div class="section-head">
+                  <div><h3>Metadata Version Viewer</h3><p>${escapeHTML(meta.tokenURI)} | validation: demo schema ok</p></div>
+                  <div class="section-actions"><button class="btn" data-action="copy-json">Copy JSON</button><button class="btn" data-action="download-json">Download</button></div>
+                </div>
+                <pre class="json-box mt-14">${escapeHTML(JSON.stringify(meta, null, 2))}</pre>
+              </article>
+            </div>
+          </div>
+        `;
+        $("#detailModal").classList.add("open");
+      },
+      closeModal(){
+        $("#detailModal").classList.remove("open");
+      },
+      copyMetadata(){
+        const card = Store.card(Store.state.activeOracleId);
+        if(!card) return;
+        const text = JSON.stringify(Metadata.forCard(card), null, 2);
+        copyText(text).then(() => this.toast("已複製", "Metadata JSON 已複製。", "OK"));
+      },
+      downloadMetadata(){
+        const card = Store.card(Store.state.activeOracleId);
+        if(!card) return;
+        downloadText(`${card.tokenId}_metadata.json`, JSON.stringify(Metadata.forCard(card), null, 2));
+      },
+      exportState(){
+        downloadText("dynamic_player_cards_v2_state.json", JSON.stringify(Store.state, null, 2));
+      },
+      resetDemo(){
+        Store.reset();
+        this.render();
+        this.toast("Demo 已重置", "Wallet、收藏庫與事件紀錄已回到初始狀態。", "OK");
+      },
+      addCustomCard(target){
+        const sportId = $("#studioSport")?.value || "soccer";
+        const sport = Sports[sportId] || Sports.soccer;
+        const stats = {};
+        sport.stats.forEach((key) => {
+          const input = $(`#stat_${cssEscape(key)}`);
+          stats[key] = Number(input?.value || sport.defaultStats[key] || 0);
+        });
+        const card = {
+          id:uid("custom_card"),
+          tokenId:`DSP-2026-CUSTOM-${String(Store.state.cards.length + 1).padStart(3,"0")}`,
+          sport:sportId,
+          playerName:$("#studioName").value.trim() || "CUSTOM PLAYER",
+          team:$("#studioTeam").value.trim() || "Concept Team",
+          teamCode:"CUS",
+          league:$("#studioLeague").value.trim() || "Concept League",
+          position:$("#studioPosition").value.trim() || "Player",
+          jerseyNumber:$("#studioJersey").value.trim() || "0",
+          nationality:$("#studioNationality").value.trim() || "Unknown",
+          continent:"Custom",
+          rarity:$("#studioRarity").value,
+          price:Number($("#studioPrice").value || .38),
+          owner:target === "collection" ? "demo_wallet" : null,
+          serial:`CU-${String(Store.state.cards.length + 1).padStart(3,"0")}/999`,
+          status:"Active",
+          version:target === "collection" ? 2 : 1,
+          lastUpdate:nowISO(),
+          imageUrl:$("#studioImage").value.trim(),
+          logoUrl:$("#studioLogo").value.trim(),
+          teamColors:[sport.tone, Rarity[$("#studioRarity").value]?.color || "#e6b85c"],
+          badges:["Custom Demo"],
+          stats,
+          metadata:{sourceUrl:"", dataSource:"Card Studio custom demo data.", animationUrl:"dsp-player-card-v2.html#custom"},
+          history:[{at:nowISO(), type:target === "collection" ? "CUSTOM_MINT" : "CUSTOM_CREATE", note:`Card Studio created card into ${target}.`}],
+          licenseNote:"Custom concept card."
+        };
+        enrichCard(card, Store.state.cards.length + 1);
+        Store.state.cards.unshift(card);
+        if(target === "collection"){
+          Actions.log("CUSTOM_MINT", card, `Card Studio 直接 Mint：${card.playerName}`, 0);
+          Store.state.activeOracleId = card.id;
+        }
+        Store.state.activeView = target === "collection" ? "collection" : "market";
+        Store.save();
+        this.render();
+        this.toast("自訂卡已建立", `${card.playerName} 已加入${target === "collection" ? "收藏庫" : "市場"}。`, "OK");
+      },
+      toast(title, message, icon = "OK"){
+        clearTimeout(this.toastTimer);
+        $("#toastTitle").textContent = title;
+        $("#toastMsg").textContent = message;
+        $("#toastIcon").textContent = icon;
+        $("#toast").classList.add("show");
+        this.toastTimer = setTimeout(() => $("#toast").classList.remove("show"), 3200);
+      }
+    };
+
+    function option(value, label, selected){
+      return `<option value="${escapeAttr(value)}" ${String(value) === String(selected) ? "selected" : ""}>${escapeHTML(label)}</option>`;
+    }
+
+    function field(id, label, value, type = "text", step = "", min = ""){
+      return `
+        <div class="form-field">
+          <label for="${escapeAttr(id)}">${escapeHTML(label)}</label>
+          <input class="field" id="${escapeAttr(id)}" type="${type}" ${step ? `step="${escapeAttr(step)}"` : ""} ${min ? `min="${escapeAttr(min)}"` : ""} value="${escapeAttr(value)}" />
+        </div>
+      `;
+    }
+
+    function listBlock(title, items){
+      const list = Array.isArray(items) ? items : String(items || "").split(/\n|;|,/).filter(Boolean);
+      return `<h4>${escapeHTML(title)}</h4><ul class="clean-list">${list.map((item) => `<li>${escapeHTML(item)}</li>`).join("")}</ul>`;
+    }
+
+    function socialLinksHTML(card){
+      const labels = [
+        ["instagram","Instagram"],["x","X / Twitter"],["facebook","Facebook"],["youtube","YouTube"],["tiktok","TikTok"],["officialWebsite","Official Website"],["leagueProfile","League Profile"],["teamProfile","Team Profile"]
+      ];
+      const links = labels.filter(([key]) => card.socialLinks?.[key]);
+      return links.length ? links.map(([key, label]) => `<a class="social-link" href="${escapeAttr(card.socialLinks[key])}" target="_blank" rel="noreferrer">${escapeHTML(label)}</a>`).join("") : `<span class="source-pill">pending official social verification</span>`;
+    }
+
+    function initials(name){
+      const parts = String(name || "CARD").replace(/[^A-Za-z0-9 ]/g, " ").trim().split(/\s+/).filter(Boolean);
+      if(!parts.length) return "DC";
+      if(parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+      return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+    }
+
+    function formatDate(iso){
+      try{
+        return new Date(iso).toLocaleString("zh-TW", {hour12:false});
+      }catch(_){
+        return iso || "-";
+      }
+    }
+
+    function downloadText(filename, text){
+      const blob = new Blob([text], {type:"application/json;charset=utf-8"});
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function tradeReceipt(type, from, to, price, gasFee){
+      const gas = Number((gasFee ?? (.002 + Math.random() * .006)).toFixed(4));
+      return {
+        txHash:`0x${Math.random().toString(16).slice(2).padEnd(12,"0")}${Date.now().toString(16)}`,
+        blockNumber:Math.floor(18400000 + Math.random() * 900000),
+        gasFee:gas,
+        from,
+        to,
+        price:Number(price || 0),
+        status:"Confirmed",
+        timestamp:nowISO(),
+        type
+      };
+    }
+
+    async function copyText(text){
+      try{
+        await navigator.clipboard.writeText(text);
+      }catch(_){
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        ta.remove();
+      }
+    }
+
+    function cssEscape(value){
+      if(window.CSS && CSS.escape) return CSS.escape(value);
+      return String(value).replace(/[^a-zA-Z0-9_-]/g, "\\$&");
+    }
+
+    window.addEventListener("DOMContentLoaded", () => UI.init());
+  })();
+  </script>
+</body>
+</html>
